@@ -18,6 +18,7 @@ class Daemon:
     def __init__(self, config: DaemonConfig) -> None:
         self.config = config
         self.running = False
+        self._processed_ids: set[str] = set()
         self.a2a = A2AClient(
             base_url=config.a2a_url,
             operator=config.operator,
@@ -79,6 +80,10 @@ class Daemon:
                 for raw_msg in messages:
                     if not self.running:
                         break
+                    msg_id = raw_msg.get("id", "")
+                    if msg_id in self._processed_ids:
+                        continue
+                    self._processed_ids.add(msg_id)
                     await self._process_dispatch(raw_msg)
                 await asyncio.sleep(self.config.poll_interval)
         except asyncio.CancelledError:

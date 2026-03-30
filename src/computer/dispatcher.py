@@ -32,14 +32,29 @@ class DispatchResult:
 
 
 def parse_dispatch(raw: dict) -> DispatchMessage:
-    """Parse a raw A2A message into a DispatchMessage."""
-    content = json.loads(raw["content"])
-    return DispatchMessage(
-        message_id=raw["id"],
-        agent=content["agent"],
-        target=content["target"],
-        prompt=content["prompt"],
-    )
+    """Parse a raw A2A message into a DispatchMessage.
+
+    Supports two formats:
+    - Structured: content is JSON with agent, target, prompt keys
+    - Plain: content is the prompt text, to_project is the target agent
+    """
+    try:
+        content = json.loads(raw["content"])
+        return DispatchMessage(
+            message_id=raw["id"],
+            agent=content.get("agent", raw.get("to_project", "driver")),
+            target=content["target"],
+            prompt=content["prompt"],
+        )
+    except (json.JSONDecodeError, KeyError):
+        # Plain text format — content is the prompt, to_project is the target
+        to_project = raw.get("to_project", "")
+        return DispatchMessage(
+            message_id=raw["id"],
+            agent=to_project.replace("bpsai-", "") if to_project.startswith("bpsai-") else "driver",
+            target=to_project if "/" not in to_project else to_project,
+            prompt=raw.get("content", ""),
+        )
 
 
 class DispatchExecutor:
