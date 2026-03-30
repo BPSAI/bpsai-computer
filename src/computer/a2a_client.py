@@ -1,0 +1,83 @@
+"""A2A HTTP client: poll dispatches, ack, post results, heartbeat."""
+
+from __future__ import annotations
+
+import json
+import logging
+
+import httpx
+
+log = logging.getLogger(__name__)
+
+
+class A2AClient:
+    """HTTP client for the A2A backend."""
+
+    def __init__(self, base_url: str, operator: str, workspace: str) -> None:
+        self.base_url = base_url.rstrip("/")
+        self.operator = operator
+        self.workspace = workspace
+
+    async def poll_dispatches(self) -> list[dict]:
+        """GET /messages with dispatch filters. Returns [] on error."""
+        params = {
+            "type": "dispatch",
+            "operator": self.operator,
+            "workspace": self.workspace,
+            "unacknowledged_only": "true",
+        }
+        try:
+            async with httpx.AsyncClient() as http:
+                resp = await http.get(f"{self.base_url}/messages", params=params)
+                resp.raise_for_status()
+                return resp.json()
+        except (httpx.HTTPError, Exception) as exc:
+            log.warning("Poll failed: %s", exc)
+            return []
+
+    async def ack_message(self, message_id: str, response: str = "dispatched") -> None:
+        """POST /messages/ack to acknowledge a dispatch."""
+        payload = {"message_id": message_id, "response": response}
+        try:
+            async with httpx.AsyncClient() as http:
+                resp = await http.post(f"{self.base_url}/messages/ack", json=payload)
+                resp.raise_for_status()
+        except (httpx.HTTPError, Exception) as exc:
+            log.warning("Ack failed for %s: %s", message_id, exc)
+
+    async def post_result(
+        self,
+        dispatch_id: str,
+        content: str,
+        success: bool,
+    ) -> None:
+        """POST /messages with type=dispatch-result."""
+        payload = {
+            "type": "dispatch-result",
+            "operator": self.operator,
+            "workspace": self.workspace,
+            "content": json.dumps({
+                "dispatch_id": dispatch_id,
+                "success": success,
+                "output": content,
+            }),
+            "sender": "bpsai-computer",
+        }
+        try:
+            async with httpx.AsyncClient() as http:
+                resp = await http.post(f"{self.base_url}/messages", json=payload)
+                resp.raise_for_status()
+        except (httpx.HTTPError, Exception) as exc:
+            log.warning("Post result failed for %s: %s", dispatch_id, exc)
+
+    async def heartbeat(self) -> None:
+        """POST heartbeat to /agents/bpsai-computer/heartbeat."""
+        try:
+            async with httpx.AsyncClient() as http:
+                resp = await http.post(
+                    f"{self.base_url}/agents/bpsai-computer/heartbeat",
+                    json={"operator": self.operator, "workspace": self.workspace},
+                )
+                resp.raise_for_status()
+        except (httpx.HTTPError, Exception) as exc:
+            log.debug("Heartbeat failed: %s", exc)
