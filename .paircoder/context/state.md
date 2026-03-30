@@ -26,6 +26,12 @@ No remaining tasks.
 
 ## What Was Just Done
 
+- **CD1.3 done** (auto-updated by hook)
+
+- **CD1.2 done** (auto-updated by hook)
+
+- **CD1.1 done** (auto-updated by hook)
+
 ### Session: 2026-03-30 — CD1 Sprint Complete
 
 - **CD1.1**: Config dataclass with YAML loading + CLI overrides, CLI entry point (`bpsai-computer daemon --operator --workspace`), Daemon class with async run loop and graceful shutdown (SIGINT/SIGTERM). 14 tests.
