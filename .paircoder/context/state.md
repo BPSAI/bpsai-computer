@@ -1,67 +1,44 @@
 # Current State
 
-> Last updated: <!-- Update after each session -->
+> Last updated: 2026-03-30
 
 ## Active Plan
 
-**Plan:** None yet
-**Status:** Ready to start
-**Current Sprint:** N/A
+**Plan:** plan-2026-03-cd1
+**Status:** All tasks complete
+**Current Sprint:** CD1
 
 ## Current Focus
 
-Project initialized with PairCoder v2. Ready to create first plan.
+Computer₀ dispatch daemon — Phase 1 complete. All three tasks implemented, tested, and pushed.
 
 ## Task Status
 
 ### Active Sprint
 
-No tasks yet. Create a plan to get started:
-
-```bash
-bpsai-pair plan new my-first-feature --type feature --title "My First Feature"
-```
+- [x] **CD1.1** — Daemon scaffold + config (operator, workspace, workspace_root, a2a_url) ✓
+- [x] **CD1.2** — A2A polling + dispatch execution (Claude Code subprocess, ack, result posting) ✓
+- [x] **CD1.3** — Integration test + docs (mock A2A, operator filtering, README) ✓
 
 ### Backlog
 
-Tasks deprioritized for later work will appear here.
+No remaining tasks.
 
 ## What Was Just Done
 
-### Session: <!-- Date --> - Project Initialization
+### Session: 2026-03-30 — CD1 Sprint Complete
 
-- Initialized project with PairCoder v2
-- Created `.paircoder/` directory structure
-- Set up initial configuration
-
-<!-- Add new session entries here as you complete work -->
+- **CD1.1**: Config dataclass with YAML loading + CLI overrides, CLI entry point (`bpsai-computer daemon --operator --workspace`), Daemon class with async run loop and graceful shutdown (SIGINT/SIGTERM). 14 tests.
+- **CD1.2**: A2A HTTP client (poll, ack, post result, heartbeat), DispatchExecutor (launches Claude Code subprocess with timeout/error handling), credential scrubber (API keys, tokens, secrets). 20 tests.
+- **CD1.3**: Full integration test (poll → ack → execute → post result), operator/workspace filtering test, missing repo error test, README with setup/config/usage docs. 3 tests.
+- **Total: 37 tests, all passing.** 3 commits pushed to main.
 
 ## What's Next
 
-1. Define your first feature or improvement
-2. Create a plan: `bpsai-pair plan new <slug>`
-3. Add tasks to the plan
-4. Start implementing!
+1. Connect to real A2A backend for end-to-end testing
+2. Add enforcement (contained-auto for PairCoder repos, --allowedTools for others)
+3. Consider Phase 2: portfolio docs migration to Computer repo
 
 ## Blockers
 
 None currently.
-
-## Quick Commands
-
-```bash
-# Check status
-bpsai-pair status
-
-# Create a new plan
-bpsai-pair plan new my-feature --type feature
-
-# List tasks
-bpsai-pair task list
-
-# Start working on a task
-bpsai-pair task update TASK-XXX --status in_progress
-
-# Complete a task (with Trello)
-bpsai-pair ttask done TRELLO-XX --summary "..." --list "Deployed/Done"
-bpsai-pair task update TASK-XXX --status done
