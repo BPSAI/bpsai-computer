@@ -1,0 +1,13 @@
+id: plan-2026-03-cd1
+title: 'CD1: Computer₀ Dispatch Daemon'
+type: feature
+status: planned
+created_at: '2026-03-29T22:42:51.826868'
+skills:
+- planning-with-pm
+goals:
+- Poll A2A channels for dispatch commands
+- Execute via Claude Code with operator+workspace routing
+- Report results back through A2A
+metadata:
+  pm_scope: story

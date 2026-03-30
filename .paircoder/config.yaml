@@ -1,10 +1,13 @@
 project_name: bpsai-computer
 version: 2.18.2
-description: "Computer₀ — workspace orchestrator and dispatch daemon"
+description: Computer₀ — workspace orchestrator and dispatch daemon
 project:
   name: Computer
-  description: "Computer₀ workspace orchestrator. Polls A2A coordination channels for dispatch commands, executes work via Claude Code, reports results. User-scoped operator routing."
-  primary_goal: Bridge between Command Center (cloud) and local execution (Claude Code on developer machines or VMs)
+  description: Computer₀ workspace orchestrator. Polls A2A coordination channels for
+    dispatch commands, executes work via Claude Code, reports results. User-scoped
+    operator routing.
+  primary_goal: Bridge between Command Center (cloud) and local execution (Claude
+    Code on developer machines or VMs)
   coverage_target: 80
 workflow:
   default_branch_type: feature
@@ -56,9 +59,9 @@ routing:
     security: claude-opus-4-6
     architecture: claude-opus-4-6
 trello:
-  enabled: false
-  board_id: ''
-  board_name: ''
+  enabled: true
+  board_id: 69b9af7b7371e80c02fd826b
+  board_name: BPS Computer
   defaults:
     project: Computer
     stack: Worker/Function
