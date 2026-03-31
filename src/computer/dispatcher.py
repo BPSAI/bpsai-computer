@@ -24,6 +24,14 @@ class DispatchMessage:
 
 
 @dataclass
+class ResumeMessage:
+    """Parsed resume message."""
+    message_id: str
+    session_id: str
+    target: str
+
+
+@dataclass
 class DispatchResult:
     """Result of a dispatch execution."""
     message_id: str
@@ -55,6 +63,24 @@ def parse_dispatch(raw: dict) -> DispatchMessage:
             target=to_project if "/" not in to_project else to_project,
             prompt=raw.get("content", ""),
         )
+
+
+def parse_resume(raw: dict) -> ResumeMessage:
+    """Parse a raw A2A message into a ResumeMessage.
+
+    Content must be JSON with session_id and target keys.
+    Raises KeyError/ValueError on invalid input.
+    """
+    content = json.loads(raw["content"])
+    session_id = content["session_id"]
+    target = content["target"]
+    if not session_id or not target:
+        raise ValueError("session_id and target are required")
+    return ResumeMessage(
+        message_id=raw["id"],
+        session_id=session_id,
+        target=target,
+    )
 
 
 class DispatchExecutor:
@@ -90,6 +116,67 @@ class DispatchExecutor:
                 message_id=msg.message_id, success=False,
                 output=f"Execution error: {exc}",
             )
+
+    async def execute_resume(
+        self,
+        msg: ResumeMessage,
+        streamer: object | None = None,
+    ) -> DispatchResult:
+        """Launch claude --resume {session_id} in the target repo directory."""
+        repo_dir = self.workspace_root / msg.target
+        if not repo_dir.is_dir():
+            return DispatchResult(
+                message_id=msg.message_id,
+                success=False,
+                output=f"Repository not found: {msg.target} (looked in {repo_dir})",
+            )
+
+        log.info("Resuming session %s in %s", msg.session_id, repo_dir)
+        try:
+            return await self._run_resume_process(msg, repo_dir, streamer)
+        except Exception as exc:
+            return DispatchResult(
+                message_id=msg.message_id, success=False,
+                output=f"Execution error: {exc}",
+            )
+
+    async def _run_resume_process(
+        self, msg: ResumeMessage, repo_dir: Path, streamer: object | None,
+    ) -> DispatchResult:
+        """Spawn claude --resume subprocess, read streams, build result."""
+        cmd = ["claude", "--resume", msg.session_id, "--dangerously-skip-permissions"]
+        proc = await asyncio.create_subprocess_exec(
+            *cmd, cwd=str(repo_dir),
+            stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE,
+        )
+        try:
+            stdout_lines, stderr_lines = await asyncio.wait_for(
+                self._read_streams(proc, streamer),
+                timeout=self.config.process_timeout,
+            )
+        except (asyncio.TimeoutError, TimeoutError):
+            await self._kill_process(proc)
+            log.warning("Resume timed out: %s", msg.session_id)
+            return DispatchResult(
+                msg.message_id, success=False,
+                output=f"Process timeout after {self.config.process_timeout}s",
+            )
+        await proc.wait()
+        return self._build_resume_result(msg, proc.returncode, stdout_lines, stderr_lines)
+
+    @staticmethod
+    def _build_resume_result(
+        msg: ResumeMessage, returncode: int,
+        stdout_lines: list[str], stderr_lines: list[str],
+    ) -> DispatchResult:
+        stdout_text = scrub_credentials("\n".join(stdout_lines))
+        stderr_text = scrub_credentials("\n".join(stderr_lines))
+        if returncode == 0:
+            return DispatchResult(msg.message_id, success=True, output=stdout_text)
+        return DispatchResult(
+            msg.message_id, success=False,
+            output=f"Exit code {returncode}\n--- stdout ---\n{stdout_text}\n--- stderr ---\n{stderr_text}",
+        )
 
     async def _run_process(
         self, msg: DispatchMessage, repo_dir: Path, streamer: object | None,

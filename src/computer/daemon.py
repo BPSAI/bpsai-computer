@@ -5,16 +5,20 @@ from __future__ import annotations
 import asyncio
 import logging
 import platform
+import re
 import time
 import uuid
+from typing import Awaitable, Callable
 
 from computer.a2a_client import A2AClient
 from computer.config import DaemonConfig
-from computer.dispatcher import DispatchExecutor, parse_dispatch
+from computer.dispatcher import DispatchExecutor, DispatchResult, parse_dispatch, parse_resume
 from computer.lifecycle import SessionLifecycle, extract_session_id
 from computer.streamer import OutputStreamer
 
 log = logging.getLogger(__name__)
+
+_EXIT_CODE_RE = re.compile(r"[Ee]xit code (\d+)")
 
 
 class Daemon:
@@ -35,42 +39,31 @@ class Daemon:
         log.info("Shutdown requested")
         self.running = False
 
-    async def _process_dispatch(self, raw_msg: dict) -> None:
-        """Process a single dispatch message: ack, execute, post lifecycle + result."""
-        try:
-            msg = parse_dispatch(raw_msg)
-        except (KeyError, Exception) as exc:
-            log.error("Failed to parse dispatch: %s", exc)
-            return
-
-        # Ack immediately
-        await self.a2a.ack_message(msg.message_id, response="dispatched")
-
-        # Generate preliminary session ID (may be replaced by Claude Code output)
-        preliminary_session_id = str(uuid.uuid4())
+    async def _execute_with_lifecycle(
+        self,
+        message_id: str,
+        session_id: str,
+        command: str,
+        execute_fn: Callable[[OutputStreamer], Awaitable[DispatchResult]],
+        resumed: bool = False,
+    ) -> None:
+        """Run subprocess with streaming, heartbeats, and lifecycle posting."""
         lifecycle = SessionLifecycle(a2a=self.a2a)
-        command = f"claude -p '{msg.prompt}' --dangerously-skip-permissions"
-
-        # Post session-started
         await lifecycle.post_started(
-            session_id=preliminary_session_id,
+            session_id=session_id,
             operator=self.config.operator,
             machine=platform.node(),
             workspace=self.config.workspace,
             command=command,
+            resumed=resumed,
         )
 
-        # Set up streaming and heartbeats
-        streamer = OutputStreamer(
-            session_id=msg.message_id,
-            a2a=self.a2a,
-            config=self.config,
-        )
+        streamer = OutputStreamer(session_id=message_id, a2a=self.a2a, config=self.config)
         streamer.start()
         heartbeat_task = asyncio.create_task(self._heartbeat_loop())
         start_time = time.monotonic()
         try:
-            result = await self.executor.execute(msg, streamer=streamer)
+            result = await execute_fn(streamer)
         finally:
             heartbeat_task.cancel()
             try:
@@ -80,40 +73,72 @@ class Daemon:
             await streamer.stop()
         duration = time.monotonic() - start_time
 
-        # Extract real session ID from stdout (falls back to preliminary)
-        stdout_lines = getattr(streamer, "stdout_lines", [])
-        session_id = extract_session_id(stdout_lines, fallback_id=preliminary_session_id)
+        real_sid = extract_session_id(getattr(streamer, "stdout_lines", []), fallback_id=session_id)
+        await self._post_lifecycle_result(lifecycle, real_sid, result, duration)
+        await self.a2a.post_result(dispatch_id=message_id, content=result.output, success=result.success)
+        return real_sid, result
 
-        # Post lifecycle complete/failed
+    async def _post_lifecycle_result(
+        self, lifecycle: SessionLifecycle, session_id: str, result: DispatchResult, duration: float,
+    ) -> None:
+        """Post session-complete or session-failed lifecycle event."""
         if result.success:
             await lifecycle.post_complete(
-                session_id=session_id,
-                exit_code=0,
-                duration_seconds=round(duration, 1),
-                output_summary=result.output,
+                session_id=session_id, exit_code=0,
+                duration_seconds=round(duration, 1), output_summary=result.output,
             )
         else:
             is_timeout = "timeout" in result.output.lower()
+            m = _EXIT_CODE_RE.search(result.output)
             await lifecycle.post_failed(
-                session_id=session_id,
-                error=result.output,
-                exit_code=None if is_timeout else self._extract_exit_code(result.output),
+                session_id=session_id, error=result.output,
+                exit_code=None if is_timeout else (int(m.group(1)) if m else None),
             )
 
-        # Post result
-        await self.a2a.post_result(
-            dispatch_id=msg.message_id,
-            content=result.output,
-            success=result.success,
+    async def _process_dispatch(self, raw_msg: dict) -> None:
+        """Process a single dispatch message: ack, execute, post lifecycle + result."""
+        try:
+            msg = parse_dispatch(raw_msg)
+        except (KeyError, Exception) as exc:
+            log.error("Failed to parse dispatch: %s", exc)
+            return
+
+        await self.a2a.ack_message(msg.message_id, response="dispatched")
+        preliminary_session_id = str(uuid.uuid4())
+        command = f"claude -p '{msg.prompt}' --dangerously-skip-permissions"
+
+        session_id, result = await self._execute_with_lifecycle(
+            message_id=msg.message_id,
+            session_id=preliminary_session_id,
+            command=command,
+            execute_fn=lambda streamer: self.executor.execute(msg, streamer=streamer),
         )
         log.info("Dispatch %s complete: success=%s session=%s", msg.message_id, result.success, session_id)
 
-    @staticmethod
-    def _extract_exit_code(output: str) -> int | None:
-        """Try to extract exit code from output like 'Exit code 1'."""
-        import re
-        m = re.search(r"[Ee]xit code (\d+)", output)
-        return int(m.group(1)) if m else None
+    async def _process_resume(self, raw_msg: dict) -> None:
+        """Process a single resume message: validate operator, execute --resume, post lifecycle."""
+        msg_operator = raw_msg.get("operator", "")
+        if msg_operator and msg_operator != self.config.operator:
+            log.warning("Resume operator mismatch: %s != %s", msg_operator, self.config.operator)
+            return
+
+        try:
+            msg = parse_resume(raw_msg)
+        except (KeyError, ValueError, Exception) as exc:
+            log.error("Failed to parse resume: %s", exc)
+            return
+
+        await self.a2a.ack_message(msg.message_id, response="resuming")
+        command = f"claude --resume {msg.session_id} --dangerously-skip-permissions"
+
+        session_id, result = await self._execute_with_lifecycle(
+            message_id=msg.message_id,
+            session_id=msg.session_id,
+            command=command,
+            execute_fn=lambda streamer: self.executor.execute_resume(msg, streamer=streamer),
+            resumed=True,
+        )
+        log.info("Resume %s complete: success=%s session=%s", msg.message_id, result.success, session_id)
 
     async def _heartbeat_loop(self) -> None:
         """Send heartbeats every 30s while a dispatch is running."""
@@ -124,11 +149,7 @@ class Daemon:
     async def run(self) -> None:
         """Main loop: poll, dispatch, repeat. Exits when self.running is False."""
         self.running = True
-        log.info(
-            "Daemon started: operator=%s workspace=%s",
-            self.config.operator,
-            self.config.workspace,
-        )
+        log.info("Daemon started: operator=%s workspace=%s", self.config.operator, self.config.workspace)
         try:
             while self.running:
                 messages = await self.a2a.poll_dispatches()
@@ -139,7 +160,10 @@ class Daemon:
                     if msg_id in self._processed_ids:
                         continue
                     self._processed_ids.add(msg_id)
-                    await self._process_dispatch(raw_msg)
+                    if raw_msg.get("type") == "resume":
+                        await self._process_resume(raw_msg)
+                    else:
+                        await self._process_dispatch(raw_msg)
                 await asyncio.sleep(self.config.poll_interval)
         except asyncio.CancelledError:
             pass

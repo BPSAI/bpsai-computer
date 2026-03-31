@@ -41,18 +41,22 @@ class SessionLifecycle:
         machine: str,
         workspace: str,
         command: str,
+        resumed: bool = False,
     ) -> None:
         """Post session-started event."""
+        data = {
+            "operator": operator,
+            "machine": machine,
+            "workspace": workspace,
+            "command": command,
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+        }
+        if resumed:
+            data["resumed"] = True
         await self._a2a.post_lifecycle(
             event_type="session-started",
             session_id=session_id,
-            data={
-                "operator": operator,
-                "machine": machine,
-                "workspace": workspace,
-                "command": command,
-                "timestamp": datetime.now(timezone.utc).isoformat(),
-            },
+            data=data,
         )
 
     async def post_complete(

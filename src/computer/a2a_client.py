@@ -32,7 +32,7 @@ class A2AClient:
                 resp.raise_for_status()
                 data = resp.json()
                 messages = data.get("messages", [])
-                return [m for m in messages if m.get("type") == "dispatch"]
+                return [m for m in messages if m.get("type") in ("dispatch", "resume")]
         except (httpx.HTTPError, Exception) as exc:
             log.warning("Poll failed: %s", exc)
             return []
