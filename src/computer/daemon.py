@@ -46,19 +46,28 @@ class Daemon:
         command: str,
         execute_fn: Callable[[OutputStreamer], Awaitable[DispatchResult]],
         resumed: bool = False,
-    ) -> None:
+    ) -> tuple[str, DispatchResult]:
         """Run subprocess with streaming, heartbeats, and lifecycle posting."""
         lifecycle = SessionLifecycle(a2a=self.a2a)
-        await lifecycle.post_started(
-            session_id=session_id,
-            operator=self.config.operator,
-            machine=platform.node(),
-            workspace=self.config.workspace,
-            command=command,
-            resumed=resumed,
-        )
+        try:
+            await lifecycle.post_started(
+                session_id=session_id,
+                operator=self.config.operator,
+                machine=platform.node(),
+                workspace=self.config.workspace,
+                command=command,
+                resumed=resumed,
+            )
+        except Exception as exc:
+            log.error("Lifecycle post_started failed: %s", exc)
+            fail_result = DispatchResult(
+                message_id=message_id, success=False,
+                output=f"Lifecycle startup error: {exc}",
+            )
+            await self.a2a.post_result(dispatch_id=message_id, content=fail_result.output, success=False)
+            return session_id, fail_result
 
-        streamer = OutputStreamer(session_id=message_id, a2a=self.a2a, config=self.config)
+        streamer = OutputStreamer(session_id=session_id, a2a=self.a2a, config=self.config)
         streamer.start()
         heartbeat_task = asyncio.create_task(self._heartbeat_loop())
         start_time = time.monotonic()
