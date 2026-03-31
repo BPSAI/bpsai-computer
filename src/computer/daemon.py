@@ -118,8 +118,8 @@ class Daemon:
     async def _process_resume(self, raw_msg: dict) -> None:
         """Process a single resume message: validate operator, execute --resume, post lifecycle."""
         msg_operator = raw_msg.get("operator", "")
-        if msg_operator and msg_operator != self.config.operator:
-            log.warning("Resume operator mismatch: %s != %s", msg_operator, self.config.operator)
+        if not msg_operator or msg_operator != self.config.operator:
+            log.warning("Resume operator mismatch: %r != %s", msg_operator, self.config.operator)
             return
 
         try:

@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
+import re
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -12,6 +13,9 @@ from computer.config import DaemonConfig
 from computer.scrubber import scrub_credentials
 
 log = logging.getLogger(__name__)
+
+_TARGET_RE = re.compile(r"^[a-zA-Z0-9\-_.]{1,128}$")
+_SESSION_ID_RE = re.compile(r"^[a-zA-Z0-9\-_]{1,256}$")
 
 
 @dataclass
@@ -48,13 +52,16 @@ def parse_dispatch(raw: dict) -> DispatchMessage:
     """
     try:
         content = json.loads(raw["content"])
+        target = content["target"]
+        if not _TARGET_RE.match(target):
+            raise ValueError(f"Invalid target: {target!r}")
         return DispatchMessage(
             message_id=raw["id"],
             agent=content.get("agent", raw.get("to_project", "driver")),
-            target=content["target"],
+            target=target,
             prompt=content["prompt"],
         )
-    except (json.JSONDecodeError, KeyError):
+    except json.JSONDecodeError:
         # Plain text format — content is the prompt, to_project is the target
         to_project = raw.get("to_project", "")
         return DispatchMessage(
@@ -76,6 +83,10 @@ def parse_resume(raw: dict) -> ResumeMessage:
     target = content["target"]
     if not session_id or not target:
         raise ValueError("session_id and target are required")
+    if not _SESSION_ID_RE.match(session_id):
+        raise ValueError(f"Invalid session_id: {session_id!r}")
+    if not _TARGET_RE.match(target):
+        raise ValueError(f"Invalid target: {target!r}")
     return ResumeMessage(
         message_id=raw["id"],
         session_id=session_id,

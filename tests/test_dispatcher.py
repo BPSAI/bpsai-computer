@@ -46,15 +46,14 @@ class TestParseDispatch:
         assert msg.target == "bpsai-a2a"
         assert msg.prompt == "audit this repo"
 
-    def test_parse_missing_structured_fields_falls_back(self):
+    def test_parse_missing_structured_fields_raises(self):
         raw = {
             "id": "msg-1",
             "type": "dispatch",
             "content": json.dumps({"agent": "auditor"}),
         }
-        msg = parse_dispatch(raw)
-        assert msg.message_id == "msg-1"
-        assert msg.prompt == json.dumps({"agent": "auditor"})
+        with pytest.raises(KeyError):
+            parse_dispatch(raw)
 
 
 class TestDispatchExecutor:
