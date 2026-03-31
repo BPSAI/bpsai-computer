@@ -11,3 +11,4 @@
 {"signal_type": "api_failure", "severity": "warning", "timestamp": "2026-03-31T00:08:43.623956+00:00", "session_id": "", "payload": {"stop_reason": "subagent_stop", "error_detail": "StopFailure hook triggered"}, "source": "automated"}
 {"signal_type": "api_failure", "severity": "warning", "timestamp": "2026-03-31T00:14:01.820319+00:00", "session_id": "", "payload": {"stop_reason": "subagent_stop", "error_detail": "StopFailure hook triggered"}, "source": "automated"}
 {"signal_type": "api_failure", "severity": "warning", "timestamp": "2026-03-31T00:15:39.642877+00:00", "session_id": "", "payload": {"stop_reason": "subagent_stop", "error_detail": "StopFailure hook triggered"}, "source": "automated"}
+{"signal_type": "api_failure", "severity": "warning", "timestamp": "2026-03-31T01:58:14.426631+00:00", "session_id": "", "payload": {"stop_reason": "subagent_stop", "error_detail": "StopFailure hook triggered"}, "source": "automated"}

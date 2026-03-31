@@ -5,11 +5,13 @@ plan: plan-2026-03-cd2
 type: feature
 priority: P0
 complexity: 10
-status: pending
-sprint: "CD2"
-tags: [lifecycle]
+status: done
+sprint: CD2
+tags:
+- lifecycle
 depends_on: []
-trello_card_id: "29"
+trello_card_id: '29'
+completed_at: '2026-03-30T21:56:06.678858'
 ---
 
 # Objective
@@ -26,12 +28,12 @@ Post structured lifecycle events when sessions start and complete. Extract Claud
 
 # Acceptance Criteria
 
-- [ ] Post `session-started` message on subprocess launch: session_id (from claude output or generated UUID), operator, machine, workspace, command, timestamp
-- [ ] Extract Claude Code session ID from subprocess stdout (parse `Session: {id}` line if present, else use generated ID)
-- [ ] Post `session-complete` message on subprocess exit: session_id, exit_code, duration_seconds, output_summary (last 10 lines), timestamp
-- [ ] Post `session-failed` if subprocess crashes or times out: session_id, error, exit_code, timestamp
-- [ ] Lifecycle messages posted to A2A dispatch channel with operator/workspace routing
-- [ ] Tests: lifecycle message posting on start/complete/fail, session ID extraction, timeout handling
+- [x] Post `session-started` message on subprocess launch: session_id (from claude output or generated UUID), operator, machine, workspace, command, timestamp
+- [x] Extract Claude Code session ID from subprocess stdout (parse `Session: {id}` line if present, else use generated ID)
+- [x] Post `session-complete` message on subprocess exit: session_id, exit_code, duration_seconds, output_summary (last 10 lines), timestamp
+- [x] Post `session-failed` if subprocess crashes or times out: session_id, error, exit_code, timestamp
+- [x] Lifecycle messages posted to A2A dispatch channel with operator/workspace routing
+- [x] Tests: lifecycle message posting on start/complete/fail, session ID extraction, timeout handling
 
 # Verification
 

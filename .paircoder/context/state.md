@@ -5,7 +5,7 @@
 ## Active Plan
 
 **Plan:** plan-2026-03-cd2
-**Status:** CD2.1 done, CD2.2 and CD2.3 pending
+**Status:** CD2.1 done, CD2.2 done, CD2.3 done
 **Current Sprint:** CD2
 
 ## Current Focus
@@ -25,6 +25,19 @@ Computer₀ dispatch daemon — Phase 1 complete. All three tasks implemented, t
 No remaining tasks.
 
 ## What Was Just Done
+
+- **CD2.3 done** — Resume command handler
+
+### Session: 2026-03-30 — CD2.3 Resume command handler
+
+- Poll loop: Recognizes `type=resume` alongside `type=dispatch` messages.
+- Dispatcher: `ResumeMessage` dataclass, `parse_resume()`, `execute_resume()` launching `claude --resume {session_id}`.
+- Daemon: `_process_resume()` with operator scoping (mismatch → ignored). Refactored common logic into `_execute_with_lifecycle()`.
+- Lifecycle: `post_started()` gains `resumed=True` flag for resume sessions.
+- A2A client: `poll_dispatches()` now returns both dispatch and resume message types.
+- Tests: 19 new tests (parsing, subprocess with --resume flag, operator scoping, error cases, poll loop routing). Total: 92 all passing.
+
+- **CD2.2 done** (auto-updated by hook)
 
 - **CD2.1 done** (auto-updated by hook)
 
@@ -51,8 +64,7 @@ No remaining tasks.
 
 ## What's Next
 
-1. CD2.2 -- Session resume
-2. CD2.3 -- TBD
+CD2 sprint complete. All tasks done.
 
 ## Blockers
 
