@@ -31,8 +31,8 @@ class TestPollDispatches:
                 "created_at": "2026-03-30T00:00:00Z",
             }
         ]
-        respx.get(f"{BASE}/messages").mock(
-            return_value=httpx.Response(200, json=messages)
+        respx.get(f"{BASE}/messages/feed").mock(
+            return_value=httpx.Response(200, json={"messages": messages})
         )
         result = await client.poll_dispatches()
         assert len(result) == 1
@@ -40,19 +40,19 @@ class TestPollDispatches:
 
     @respx.mock
     async def test_poll_sends_correct_params(self, client):
-        route = respx.get(f"{BASE}/messages").mock(
-            return_value=httpx.Response(200, json=[])
+        route = respx.get(f"{BASE}/messages/feed").mock(
+            return_value=httpx.Response(200, json={"messages": []})
         )
         await client.poll_dispatches()
         request = route.calls[0].request
-        assert "type=dispatch" in str(request.url)
+        assert "agent=computer" in str(request.url)
         assert "operator=mike" in str(request.url)
         assert "workspace=bpsai" in str(request.url)
-        assert "unacknowledged_only=true" in str(request.url)
+        assert "limit=10" in str(request.url)
 
     @respx.mock
     async def test_poll_returns_empty_on_error(self, client):
-        respx.get(f"{BASE}/messages").mock(
+        respx.get(f"{BASE}/messages/feed").mock(
             return_value=httpx.Response(500, text="Internal Server Error")
         )
         result = await client.poll_dispatches()
@@ -111,6 +111,38 @@ class TestPostResult:
         )
         body = route.calls[0].request.content
         assert b"dispatch-result" in body
+
+
+class TestPostSessionOutput:
+    """Test posting session output (streaming lines)."""
+
+    @respx.mock
+    async def test_post_session_output(self, client):
+        route = respx.post(f"{BASE}/messages").mock(
+            return_value=httpx.Response(201, json={"id": "msg-out-1"})
+        )
+        from computer.streamer import StreamLine
+
+        lines = [
+            StreamLine(line_number=1, content="hello", stream="stdout", timestamp="2026-03-30T00:00:00"),
+            StreamLine(line_number=2, content="world", stream="stderr", timestamp="2026-03-30T00:00:01"),
+        ]
+        await client.post_session_output(session_id="sess-1", lines=lines)
+        assert route.called
+        body = route.calls[0].request.content
+        assert b"session-output" in body
+        assert b"sess-1" in body
+
+    @respx.mock
+    async def test_post_session_output_handles_error(self, client):
+        respx.post(f"{BASE}/messages").mock(
+            return_value=httpx.Response(500, text="fail")
+        )
+        from computer.streamer import StreamLine
+
+        lines = [StreamLine(1, "x", "stdout", "2026-03-30T00:00:00")]
+        # Should not raise
+        await client.post_session_output(session_id="sess-1", lines=lines)
 
 
 class TestHeartbeat:

@@ -64,8 +64,16 @@ class DispatchExecutor:
         self.config = config
         self.workspace_root = Path(config.workspace_root)
 
-    async def execute(self, msg: DispatchMessage) -> DispatchResult:
-        """Launch Claude Code in the target repo directory."""
+    async def execute(
+        self,
+        msg: DispatchMessage,
+        streamer: object | None = None,
+    ) -> DispatchResult:
+        """Launch Claude Code in the target repo directory.
+
+        If *streamer* is provided, stdout/stderr lines are fed to it
+        incrementally. Final result is always returned.
+        """
         repo_dir = self.workspace_root / msg.target
         if not repo_dir.is_dir():
             return DispatchResult(
@@ -74,56 +82,92 @@ class DispatchExecutor:
                 output=f"Repository not found: {msg.target} (looked in {repo_dir})",
             )
 
-        cmd = [
-            "claude",
-            "-p", msg.prompt,
-            "--dangerously-skip-permissions",
-        ]
-
         log.info("Dispatching: %s in %s", msg.agent, repo_dir)
         try:
-            proc = await asyncio.create_subprocess_exec(
-                *cmd,
-                cwd=str(repo_dir),
-                stdout=asyncio.subprocess.PIPE,
-                stderr=asyncio.subprocess.PIPE,
-            )
-            stdout, stderr = await asyncio.wait_for(
-                proc.communicate(),
-                timeout=self.config.process_timeout,
-            )
-
-            stdout_text = scrub_credentials(stdout.decode(errors="replace"))
-            stderr_text = scrub_credentials(stderr.decode(errors="replace"))
-
-            if proc.returncode == 0:
-                return DispatchResult(
-                    message_id=msg.message_id,
-                    success=True,
-                    output=stdout_text,
-                )
-            else:
-                return DispatchResult(
-                    message_id=msg.message_id,
-                    success=False,
-                    output=f"Exit code {proc.returncode}\n--- stdout ---\n{stdout_text}\n--- stderr ---\n{stderr_text}",
-                )
-
-        except (asyncio.TimeoutError, TimeoutError):
-            log.warning("Dispatch timed out: %s", msg.message_id)
-            try:
-                proc.kill()
-                await proc.wait()
-            except Exception:
-                pass
-            return DispatchResult(
-                message_id=msg.message_id,
-                success=False,
-                output=f"Process timeout after {self.config.process_timeout}s",
-            )
+            return await self._run_process(msg, repo_dir, streamer)
         except Exception as exc:
             return DispatchResult(
-                message_id=msg.message_id,
-                success=False,
+                message_id=msg.message_id, success=False,
                 output=f"Execution error: {exc}",
             )
+
+    async def _run_process(
+        self, msg: DispatchMessage, repo_dir: Path, streamer: object | None,
+    ) -> DispatchResult:
+        """Spawn subprocess, read streams line-by-line, build result."""
+        cmd = ["claude", "-p", msg.prompt, "--dangerously-skip-permissions"]
+        proc = await asyncio.create_subprocess_exec(
+            *cmd, cwd=str(repo_dir),
+            stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE,
+        )
+        try:
+            stdout_lines, stderr_lines = await asyncio.wait_for(
+                self._read_streams(proc, streamer),
+                timeout=self.config.process_timeout,
+            )
+        except (asyncio.TimeoutError, TimeoutError):
+            await self._kill_process(proc)
+            log.warning("Dispatch timed out: %s", msg.message_id)
+            return DispatchResult(
+                msg.message_id, success=False,
+                output=f"Process timeout after {self.config.process_timeout}s",
+            )
+        await proc.wait()
+        return self._build_result(msg, proc.returncode, stdout_lines, stderr_lines)
+
+    @staticmethod
+    def _build_result(
+        msg: DispatchMessage, returncode: int,
+        stdout_lines: list[str], stderr_lines: list[str],
+    ) -> DispatchResult:
+        stdout_text = scrub_credentials("\n".join(stdout_lines))
+        stderr_text = scrub_credentials("\n".join(stderr_lines))
+        if returncode == 0:
+            return DispatchResult(msg.message_id, success=True, output=stdout_text)
+        return DispatchResult(
+            msg.message_id, success=False,
+            output=f"Exit code {returncode}\n--- stdout ---\n{stdout_text}\n--- stderr ---\n{stderr_text}",
+        )
+
+    @staticmethod
+    async def _kill_process(proc: asyncio.subprocess.Process) -> None:
+        try:
+            proc.kill()
+            await proc.wait()
+        except Exception:
+            pass
+
+    @staticmethod
+    async def _read_stream(
+        stream: asyncio.StreamReader,
+        stream_name: str,
+        collected: list[str],
+        streamer: object | None,
+    ) -> None:
+        """Read a stream line-by-line, feeding each line to the streamer."""
+        while True:
+            raw = await stream.readline()
+            if not raw:
+                break
+            line = raw.decode(errors="replace").rstrip("\n").rstrip("\r")
+            collected.append(line)
+            if streamer is not None:
+                streamer.add_line(line, stream=stream_name)
+
+    @staticmethod
+    async def _read_streams(
+        proc: asyncio.subprocess.Process,
+        streamer: object | None,
+    ) -> tuple[list[str], list[str]]:
+        """Read stdout and stderr concurrently, line-by-line."""
+        stdout_lines: list[str] = []
+        stderr_lines: list[str] = []
+        await asyncio.gather(
+            DispatchExecutor._read_stream(
+                proc.stdout, "stdout", stdout_lines, streamer
+            ),
+            DispatchExecutor._read_stream(
+                proc.stderr, "stderr", stderr_lines, streamer
+            ),
+        )
+        return stdout_lines, stderr_lines

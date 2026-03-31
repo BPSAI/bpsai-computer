@@ -26,10 +26,14 @@ class DaemonConfig:
     a2a_url: str = "https://a2a.paircoder.ai"
     poll_interval: int = 5
     process_timeout: int = 1800
+    stream_batch_interval: float = 2.0
+    stream_buffer_limit: int = 1000
 
     def __post_init__(self):
         self.poll_interval = int(self.poll_interval)
         self.process_timeout = int(self.process_timeout)
+        self.stream_batch_interval = float(self.stream_batch_interval)
+        self.stream_buffer_limit = int(self.stream_buffer_limit)
 
 
 def _default_config_path() -> Path:

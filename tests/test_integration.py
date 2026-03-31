@@ -59,10 +59,10 @@ class TestFullDispatchFlow:
         def poll_side_effect(request):
             poll_calls[0] += 1
             if poll_calls[0] == 1:
-                return httpx.Response(200, json=[_dispatch_message()])
-            return httpx.Response(200, json=[])
+                return httpx.Response(200, json={"messages": [_dispatch_message()]})
+            return httpx.Response(200, json={"messages": []})
 
-        poll_route = respx.get(f"{BASE}/messages").mock(side_effect=poll_side_effect)
+        poll_route = respx.get(f"{BASE}/messages/feed").mock(side_effect=poll_side_effect)
         ack_route = respx.post(f"{BASE}/messages/ack").mock(
             return_value=httpx.Response(200, json={"status": "ok"})
         )
@@ -73,9 +73,16 @@ class TestFullDispatchFlow:
             return_value=httpx.Response(200, json={"status": "ok"})
         )
 
-        # Mock Claude Code subprocess
+        # Mock Claude Code subprocess (line-by-line reading)
+        mock_stdout = AsyncMock()
+        mock_stdout.readline = AsyncMock(side_effect=[b"Audit complete. 0 issues.\n", b""])
+        mock_stderr = AsyncMock()
+        mock_stderr.readline = AsyncMock(side_effect=[b""])
+
         mock_proc = AsyncMock()
-        mock_proc.communicate = AsyncMock(return_value=(b"Audit complete. 0 issues.", b""))
+        mock_proc.stdout = mock_stdout
+        mock_proc.stderr = mock_stderr
+        mock_proc.wait = AsyncMock(return_value=0)
         mock_proc.returncode = 0
 
         daemon = Daemon(config)
@@ -116,8 +123,8 @@ class TestOperatorFiltering:
         """Messages are filtered by the A2A query params, not client-side."""
         # The daemon sends operator=mike&workspace=bpsai in the query.
         # If A2A returns an empty list, daemon does nothing.
-        respx.get(f"{BASE}/messages").mock(
-            return_value=httpx.Response(200, json=[])
+        respx.get(f"{BASE}/messages/feed").mock(
+            return_value=httpx.Response(200, json={"messages": []})
         )
 
         daemon = Daemon(config)
@@ -143,10 +150,10 @@ class TestMissingRepoError:
     @respx.mock
     async def test_missing_repo_posts_error(self, config):
         """When target repo doesn't exist, daemon posts error result."""
-        respx.get(f"{BASE}/messages").mock(
+        respx.get(f"{BASE}/messages/feed").mock(
             side_effect=[
-                httpx.Response(200, json=[_dispatch_message(target="nonexistent-repo")]),
-                httpx.Response(200, json=[]),
+                httpx.Response(200, json={"messages": [_dispatch_message(target="nonexistent-repo")]}),
+                httpx.Response(200, json={"messages": []}),
             ]
         )
         ack_route = respx.post(f"{BASE}/messages/ack").mock(

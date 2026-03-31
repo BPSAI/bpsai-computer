@@ -8,6 +8,7 @@ import logging
 from computer.a2a_client import A2AClient
 from computer.config import DaemonConfig
 from computer.dispatcher import DispatchExecutor, parse_dispatch
+from computer.streamer import OutputStreamer
 
 log = logging.getLogger(__name__)
 
@@ -41,16 +42,23 @@ class Daemon:
         # Ack immediately
         await self.a2a.ack_message(msg.message_id, response="dispatched")
 
-        # Send heartbeats while executing
+        # Set up streaming and heartbeats
+        streamer = OutputStreamer(
+            session_id=msg.message_id,
+            a2a=self.a2a,
+            config=self.config,
+        )
+        streamer.start()
         heartbeat_task = asyncio.create_task(self._heartbeat_loop())
         try:
-            result = await self.executor.execute(msg)
+            result = await self.executor.execute(msg, streamer=streamer)
         finally:
             heartbeat_task.cancel()
             try:
                 await heartbeat_task
             except asyncio.CancelledError:
                 pass
+            await streamer.stop()
 
         # Post result
         await self.a2a.post_result(
