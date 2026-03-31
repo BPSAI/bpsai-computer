@@ -53,7 +53,7 @@ class OutputStreamer:
         )
         self._buffer.append(line)
         if stream == "stdout":
-            self._stdout_lines.append(content)
+            self._stdout_lines.append(scrubbed)
         if len(self._buffer) > self._buffer_limit:
             self._buffer = self._buffer[-self._buffer_limit:]
 

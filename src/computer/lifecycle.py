@@ -9,7 +9,7 @@ from datetime import datetime, timezone
 
 log = logging.getLogger(__name__)
 
-_SESSION_RE = re.compile(r"^Session:\s*(.+)$")
+_SESSION_RE = re.compile(r"^Session:\s*(.{1,256})$")
 
 
 def extract_session_id(
