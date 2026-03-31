@@ -8,6 +8,7 @@ import platform
 import re
 import time
 import uuid
+from collections import OrderedDict
 from typing import Awaitable, Callable
 
 from computer.a2a_client import A2AClient
@@ -19,6 +20,7 @@ from computer.streamer import OutputStreamer
 log = logging.getLogger(__name__)
 
 _EXIT_CODE_RE = re.compile(r"[Ee]xit code (\d+)")
+_MAX_PROCESSED_IDS = 10_000
 
 
 class Daemon:
@@ -27,13 +29,15 @@ class Daemon:
     def __init__(self, config: DaemonConfig) -> None:
         self.config = config
         self.running = False
-        self._processed_ids: set[str] = set()
+        self._processed_ids: OrderedDict[str, None] = OrderedDict()
         self.a2a = A2AClient(
             base_url=config.a2a_url,
             operator=config.operator,
             workspace=config.workspace,
         )
         self.executor = DispatchExecutor(config)
+        if not config.a2a_url.startswith("https://"):
+            log.warning("a2a_url is not HTTPS: %s — traffic will be unencrypted", config.a2a_url)
 
     def shutdown(self) -> None:
         log.info("Shutdown requested")
@@ -168,7 +172,9 @@ class Daemon:
                     msg_id = raw_msg.get("id", "")
                     if msg_id in self._processed_ids:
                         continue
-                    self._processed_ids.add(msg_id)
+                    self._processed_ids[msg_id] = None
+                    if len(self._processed_ids) > _MAX_PROCESSED_IDS:
+                        self._processed_ids.popitem(last=False)
                     if raw_msg.get("type") == "resume":
                         await self._process_resume(raw_msg)
                     else:
@@ -178,4 +184,5 @@ class Daemon:
             pass
         finally:
             self.running = False
+            await self.a2a.close()
             log.info("Daemon stopped")

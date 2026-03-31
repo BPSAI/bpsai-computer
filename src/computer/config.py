@@ -63,8 +63,6 @@ def load_config(
         if v is not None:
             merged[k] = v
 
-    # Validate required fields
-    required = {f.name for f in fields(DaemonConfig) if f.default is f.default_factory is type(None)}
     valid_keys = {f.name for f in fields(DaemonConfig)}
     filtered = {k: v for k, v in merged.items() if k in valid_keys}
 

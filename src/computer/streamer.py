@@ -55,6 +55,8 @@ class OutputStreamer:
         if stream == "stdout":
             self._stdout_lines.append(scrubbed)
         if len(self._buffer) > self._buffer_limit:
+            dropped = len(self._buffer) - self._buffer_limit
+            log.warning("Backpressure: dropping %d oldest lines (buffer limit %d)", dropped, self._buffer_limit)
             self._buffer = self._buffer[-self._buffer_limit:]
 
     def start(self) -> None:
