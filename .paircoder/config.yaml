@@ -1,11 +1,11 @@
 project_name: bpsai-computer
-version: 2.18.2
-description: Computer₀ — workspace orchestrator and dispatch daemon
+version: 2.19.1
+description: "Computer\u2080 \u2014 workspace orchestrator and dispatch daemon"
 project:
   name: Computer
-  description: Computer₀ workspace orchestrator. Polls A2A coordination channels for
-    dispatch commands, executes work via Claude Code, reports results. User-scoped
-    operator routing.
+  description: "Computer\u2080 workspace orchestrator. Polls A2A coordination channels\
+    \ for dispatch commands, executes work via Claude Code, reports results. User-scoped\
+    \ operator routing."
   primary_goal: Bridge between Command Center (cloud) and local execution (Claude
     Code on developer machines or VMs)
   coverage_target: 80

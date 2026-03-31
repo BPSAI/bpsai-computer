@@ -4,9 +4,9 @@
 
 ## Active Plan
 
-**Plan:** plan-2026-03-cd1
-**Status:** All tasks complete
-**Current Sprint:** CD1
+**Plan:** plan-2026-03-cd2
+**Status:** CD2.1 done, CD2.2 and CD2.3 pending
+**Current Sprint:** CD2
 
 ## Current Focus
 
@@ -26,11 +26,21 @@ No remaining tasks.
 
 ## What Was Just Done
 
+- **CD2.1 done** (auto-updated by hook)
+
 - **CD1.3 done** (auto-updated by hook)
 
 - **CD1.2 done** (auto-updated by hook)
 
 - **CD1.1 done** (auto-updated by hook)
+
+### Session: 2026-03-30 -- CD2.1 Stream stdout incrementally
+
+- Config: Added stream_batch_interval and stream_buffer_limit to DaemonConfig.
+- A2A Client: Added post_session_output() for batched session-output messages.
+- OutputStreamer (new streamer.py): StreamLine dataclass, add_line() with scrubbing, backpressure, periodic flush.
+- Dispatcher: Refactored to readline(). Optional streamer param. Backwards compatible.
+- Tests: Fixed old tests for readline + /messages/feed. Added 17 new tests. Total: 54 all passing.
 
 ### Session: 2026-03-30 — CD1 Sprint Complete
 
@@ -41,9 +51,8 @@ No remaining tasks.
 
 ## What's Next
 
-1. Connect to real A2A backend for end-to-end testing
-2. Add enforcement (contained-auto for PairCoder repos, --allowedTools for others)
-3. Consider Phase 2: portfolio docs migration to Computer repo
+1. CD2.2 -- Session resume
+2. CD2.3 -- TBD
 
 ## Blockers
 

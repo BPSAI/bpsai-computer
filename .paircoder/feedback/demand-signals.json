@@ -1,0 +1,35 @@
+{
+  "features": {
+    "bugfix": {
+      "total_invocations": 32300,
+      "unique_licenses": 4,
+      "adoption_rate": 0.8,
+      "stale": false
+    },
+    "feature": {
+      "total_invocations": 196873,
+      "unique_licenses": 4,
+      "adoption_rate": 0.8,
+      "stale": false
+    },
+    "chore": {
+      "total_invocations": 43302,
+      "unique_licenses": 3,
+      "adoption_rate": 0.6,
+      "stale": false
+    },
+    "refactor": {
+      "total_invocations": 9777,
+      "unique_licenses": 4,
+      "adoption_rate": 0.8,
+      "stale": false
+    },
+    "unknown": {
+      "total_invocations": 243691,
+      "unique_licenses": 2,
+      "adoption_rate": 0.4,
+      "stale": false
+    }
+  },
+  "total_active_licenses": 5
+}
