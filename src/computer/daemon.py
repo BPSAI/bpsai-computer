@@ -4,10 +4,14 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import platform
+import time
+import uuid
 
 from computer.a2a_client import A2AClient
 from computer.config import DaemonConfig
 from computer.dispatcher import DispatchExecutor, parse_dispatch
+from computer.lifecycle import SessionLifecycle, extract_session_id
 from computer.streamer import OutputStreamer
 
 log = logging.getLogger(__name__)
@@ -32,7 +36,7 @@ class Daemon:
         self.running = False
 
     async def _process_dispatch(self, raw_msg: dict) -> None:
-        """Process a single dispatch message: ack, execute, post result."""
+        """Process a single dispatch message: ack, execute, post lifecycle + result."""
         try:
             msg = parse_dispatch(raw_msg)
         except (KeyError, Exception) as exc:
@@ -42,6 +46,20 @@ class Daemon:
         # Ack immediately
         await self.a2a.ack_message(msg.message_id, response="dispatched")
 
+        # Generate preliminary session ID (may be replaced by Claude Code output)
+        preliminary_session_id = str(uuid.uuid4())
+        lifecycle = SessionLifecycle(a2a=self.a2a)
+        command = f"claude -p '{msg.prompt}' --dangerously-skip-permissions"
+
+        # Post session-started
+        await lifecycle.post_started(
+            session_id=preliminary_session_id,
+            operator=self.config.operator,
+            machine=platform.node(),
+            workspace=self.config.workspace,
+            command=command,
+        )
+
         # Set up streaming and heartbeats
         streamer = OutputStreamer(
             session_id=msg.message_id,
@@ -50,6 +68,7 @@ class Daemon:
         )
         streamer.start()
         heartbeat_task = asyncio.create_task(self._heartbeat_loop())
+        start_time = time.monotonic()
         try:
             result = await self.executor.execute(msg, streamer=streamer)
         finally:
@@ -59,6 +78,27 @@ class Daemon:
             except asyncio.CancelledError:
                 pass
             await streamer.stop()
+        duration = time.monotonic() - start_time
+
+        # Extract real session ID from stdout (falls back to preliminary)
+        stdout_lines = getattr(streamer, "stdout_lines", [])
+        session_id = extract_session_id(stdout_lines, fallback_id=preliminary_session_id)
+
+        # Post lifecycle complete/failed
+        if result.success:
+            await lifecycle.post_complete(
+                session_id=session_id,
+                exit_code=0,
+                duration_seconds=round(duration, 1),
+                output_summary=result.output,
+            )
+        else:
+            is_timeout = "timeout" in result.output.lower()
+            await lifecycle.post_failed(
+                session_id=session_id,
+                error=result.output,
+                exit_code=None if is_timeout else self._extract_exit_code(result.output),
+            )
 
         # Post result
         await self.a2a.post_result(
@@ -66,7 +106,14 @@ class Daemon:
             content=result.output,
             success=result.success,
         )
-        log.info("Dispatch %s complete: success=%s", msg.message_id, result.success)
+        log.info("Dispatch %s complete: success=%s session=%s", msg.message_id, result.success, session_id)
+
+    @staticmethod
+    def _extract_exit_code(output: str) -> int | None:
+        """Try to extract exit code from output like 'Exit code 1'."""
+        import re
+        m = re.search(r"[Ee]xit code (\d+)", output)
+        return int(m.group(1)) if m else None
 
     async def _heartbeat_loop(self) -> None:
         """Send heartbeats every 30s while a dispatch is running."""

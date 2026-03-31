@@ -105,6 +105,28 @@ class A2AClient:
         except (httpx.HTTPError, Exception) as exc:
             log.warning("Post session output failed for %s: %s", session_id, exc)
 
+    async def post_lifecycle(
+        self,
+        event_type: str,
+        session_id: str,
+        data: dict,
+    ) -> None:
+        """POST /messages with a lifecycle event type (session-started/complete/failed)."""
+        payload = {
+            "type": event_type,
+            "from_project": "bpsai-computer",
+            "to_project": "computer",
+            "operator": self.operator,
+            "workspace": self.workspace,
+            "content": json.dumps({"session_id": session_id, **data}),
+        }
+        try:
+            async with httpx.AsyncClient() as http:
+                resp = await http.post(f"{self.base_url}/messages", json=payload)
+                resp.raise_for_status()
+        except (httpx.HTTPError, Exception) as exc:
+            log.warning("Post lifecycle %s failed for %s: %s", event_type, session_id, exc)
+
     async def heartbeat(self) -> None:
         """POST heartbeat to /agents/bpsai-computer/heartbeat."""
         try:

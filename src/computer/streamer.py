@@ -33,7 +33,13 @@ class OutputStreamer:
         self._buffer_limit = config.stream_buffer_limit
         self._buffer: list[StreamLine] = []
         self._line_count = 0
+        self._stdout_lines: list[str] = []
         self._flush_task: asyncio.Task | None = None
+
+    @property
+    def stdout_lines(self) -> list[str]:
+        """Raw stdout lines collected (unscrubbed) for session ID extraction."""
+        return self._stdout_lines
 
     def add_line(self, content: str, stream: str = "stdout") -> None:
         """Add a line to the buffer. Scrubs credentials and applies backpressure."""
@@ -46,6 +52,8 @@ class OutputStreamer:
             timestamp=datetime.now(timezone.utc).isoformat(),
         )
         self._buffer.append(line)
+        if stream == "stdout":
+            self._stdout_lines.append(content)
         if len(self._buffer) > self._buffer_limit:
             self._buffer = self._buffer[-self._buffer_limit:]
 
