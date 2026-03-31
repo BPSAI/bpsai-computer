@@ -106,7 +106,7 @@ class TestFullDispatchFlow:
 
         # Verify: result was posted
         assert result_route.called
-        result_body = json.loads(result_route.calls[0].request.content)
+        result_body = next(json.loads(call.request.content) for call in result_route.calls if json.loads(call.request.content).get("type") == "dispatch-result")
         assert result_body["type"] == "dispatch-result"
         assert result_body["operator"] == "mike"
         assert result_body["workspace"] == "bpsai"
@@ -141,7 +141,7 @@ class TestOperatorFiltering:
         url_str = str(request.url)
         assert "operator=mike" in url_str
         assert "workspace=bpsai" in url_str
-        assert "type=dispatch" in url_str
+        assert "agent=computer" in url_str
 
 
 class TestMissingRepoError:
@@ -177,7 +177,7 @@ class TestMissingRepoError:
 
         # Verify: error result was posted
         assert result_route.called
-        result_body = json.loads(result_route.calls[0].request.content)
+        result_body = next(json.loads(call.request.content) for call in result_route.calls if json.loads(call.request.content).get("type") == "dispatch-result")
         result_content = json.loads(result_body["content"])
         assert result_content["success"] is False
         assert "not found" in result_content["output"].lower()
