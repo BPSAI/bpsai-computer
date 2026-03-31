@@ -26,6 +26,8 @@ No remaining tasks.
 
 ## What Was Just Done
 
+- **CD2.3 done** (auto-updated by hook)
+
 - **CD2.3 done** — Resume command handler
 
 ### Session: 2026-03-30 — CD2.3 Resume command handler
