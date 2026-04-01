@@ -12,3 +12,4 @@ agent_pack.tgz
 .paircoder/telemetry/audit.jsonl
 .paircoder/telemetry/session_snapshot.json
 .paircoder/feedback/calibration.json
+.idea/

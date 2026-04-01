@@ -1,73 +1,36 @@
 # Current State
 
-> Last updated: 2026-03-30
+> Last updated: 2026-03-31
+
+## Status: CD2 + CD2-FIX Complete — 126 Tests
 
 ## Active Plan
 
-**Plan:** plan-2026-03-cd2
-**Status:** CD2.1 done, CD2.2 done, CD2.3 done
-**Current Sprint:** CD2
+**Plan:** All plans complete
+**Current Sprint:** None active
 
-## Current Focus
+## What Was Just Done (2026-03-31)
 
-Computer₀ dispatch daemon — Phase 1 complete. All three tasks implemented, tested, and pushed.
+- **CD2 Sprint COMPLETE** (3/3 tasks, 37->92 tests)
+  - CD2.1: OutputStreamer — line-by-line stdout reading with batched A2A posting, credential scrubbing, backpressure
+  - CD2.2: SessionLifecycle — post session-started/complete/failed to A2A, session ID extraction from stdout
+  - CD2.3: Resume command handler — type=resume messages, claude --resume session_id, operator scoping
 
-## Task Status
-
-### Active Sprint
-
-- [x] **CD1.1** — Daemon scaffold + config (operator, workspace, workspace_root, a2a_url) ✓
-- [x] **CD1.2** — A2A polling + dispatch execution (Claude Code subprocess, ack, result posting) ✓
-- [x] **CD1.3** — Integration test + docs (mock A2A, operator filtering, README) ✓
-
-### Backlog
-
-No remaining tasks.
-
-## What Was Just Done
-
-- **CD2.3 done** (auto-updated by hook)
-
-- **CD2.3 done** — Resume command handler
-
-### Session: 2026-03-30 — CD2.3 Resume command handler
-
-- Poll loop: Recognizes `type=resume` alongside `type=dispatch` messages.
-- Dispatcher: `ResumeMessage` dataclass, `parse_resume()`, `execute_resume()` launching `claude --resume {session_id}`.
-- Daemon: `_process_resume()` with operator scoping (mismatch → ignored). Refactored common logic into `_execute_with_lifecycle()`.
-- Lifecycle: `post_started()` gains `resumed=True` flag for resume sessions.
-- A2A client: `poll_dispatches()` now returns both dispatch and resume message types.
-- Tests: 19 new tests (parsing, subprocess with --resume flag, operator scoping, error cases, poll loop routing). Total: 92 all passing.
-
-- **CD2.2 done** (auto-updated by hook)
-
-- **CD2.1 done** (auto-updated by hook)
-
-- **CD1.3 done** (auto-updated by hook)
-
-- **CD1.2 done** (auto-updated by hook)
-
-- **CD1.1 done** (auto-updated by hook)
-
-### Session: 2026-03-30 -- CD2.1 Stream stdout incrementally
-
-- Config: Added stream_batch_interval and stream_buffer_limit to DaemonConfig.
-- A2A Client: Added post_session_output() for batched session-output messages.
-- OutputStreamer (new streamer.py): StreamLine dataclass, add_line() with scrubbing, backpressure, periodic flush.
-- Dispatcher: Refactored to readline(). Optional streamer param. Backwards compatible.
-- Tests: Fixed old tests for readline + /messages/feed. Added 17 new tests. Total: 54 all passing.
-
-### Session: 2026-03-30 — CD1 Sprint Complete
-
-- **CD1.1**: Config dataclass with YAML loading + CLI overrides, CLI entry point (`bpsai-computer daemon --operator --workspace`), Daemon class with async run loop and graceful shutdown (SIGINT/SIGTERM). 14 tests.
-- **CD1.2**: A2A HTTP client (poll, ack, post result, heartbeat), DispatchExecutor (launches Claude Code subprocess with timeout/error handling), credential scrubber (API keys, tokens, secrets). 20 tests.
-- **CD1.3**: Full integration test (poll → ack → execute → post result), operator/workspace filtering test, missing repo error test, README with setup/config/usage docs. 3 tests.
-- **Total: 37 tests, all passing.** 3 commits pushed to main.
+- **CD2-FIX Sprint COMPLETE** (4/4 tasks, 92->126 tests)
+  - CDF.1: Operator check inverted (missing field = rejected), path traversal guard, session_id regex validation, target regex validation
+  - CDF.2: Raw stdout buffer scrubbed, 5 new scrubber patterns (GitHub PATs, GCP, OpenAI, URL creds), session_id extraction capped
+  - CDF.3: OutputStreamer gets session_id not message_id, lifecycle posting failure handled gracefully
+  - CDF.4: A2A client reuses connections with timeouts, processed_ids bounded at 10k, HTTPS warning, backpressure logging
 
 ## What's Next
 
-CD2 sprint complete. All tasks done.
+1. No immediate work planned for bpsai-computer
+2. CD3 (future): Session streaming to Command Center, enforcement modes per D-024
+3. Branch protection setup (BPSAI/paircoder#121)
 
-## Blockers
-
-None currently.
+```yaml
+project: bpsai-computer
+status: complete
+tests: 126
+sprints_done: [CD1, CD2, CD2-FIX]
+```
