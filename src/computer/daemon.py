@@ -12,6 +12,7 @@ from collections import OrderedDict
 from typing import Awaitable, Callable
 
 from computer.a2a_client import A2AClient
+from computer.auth import TokenManager
 from computer.config import DaemonConfig
 from computer.dispatcher import DispatchExecutor, DispatchResult, parse_dispatch, parse_resume
 from computer.lifecycle import SessionLifecycle, extract_session_id
@@ -30,10 +31,25 @@ class Daemon:
         self.config = config
         self.running = False
         self._processed_ids: OrderedDict[str, None] = OrderedDict()
+
+        # Set up JWT auth if license_id is configured
+        token_manager: TokenManager | None = None
+        if config.license_id:
+            token_manager = TokenManager(
+                paircoder_api_url=config.paircoder_api_url,
+                license_id=config.license_id,
+                operator=config.operator,
+            )
+            log.info("JWT auth enabled: license_id=%s", config.license_id)
+        else:
+            log.warning("No license_id configured — A2A calls will not include JWT auth")
+        self._token_manager = token_manager
+
         self.a2a = A2AClient(
             base_url=config.a2a_url,
             operator=config.operator,
             workspace=config.workspace,
+            token_manager=token_manager,
         )
         self.executor = DispatchExecutor(config)
         if not config.a2a_url.startswith("https://"):
@@ -185,4 +201,6 @@ class Daemon:
         finally:
             self.running = False
             await self.a2a.close()
+            if self._token_manager:
+                await self._token_manager.close()
             log.info("Daemon stopped")

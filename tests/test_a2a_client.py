@@ -1,5 +1,8 @@
 """Tests for the A2A HTTP client."""
 
+import time
+from unittest.mock import AsyncMock
+
 import httpx
 import pytest
 import respx
@@ -155,3 +158,82 @@ class TestHeartbeat:
         )
         await client.heartbeat()
         assert route.called
+
+
+class TestBearerAuth:
+    """Test that Authorization: Bearer header is included when TokenManager is provided."""
+
+    @pytest.fixture
+    def token_manager(self):
+        mgr = AsyncMock()
+        mgr.get_token = AsyncMock(return_value="jwt-test-token")
+        return mgr
+
+    @pytest.fixture
+    def auth_client(self, token_manager):
+        return A2AClient(
+            base_url=BASE, operator="mike", workspace="bpsai",
+            token_manager=token_manager,
+        )
+
+    @respx.mock
+    async def test_poll_includes_bearer(self, auth_client):
+        route = respx.get(f"{BASE}/messages/feed").mock(
+            return_value=httpx.Response(200, json={"messages": []})
+        )
+        await auth_client.poll_dispatches()
+        auth_header = route.calls[0].request.headers.get("authorization")
+        assert auth_header == "Bearer jwt-test-token"
+
+    @respx.mock
+    async def test_ack_includes_bearer(self, auth_client):
+        route = respx.post(f"{BASE}/messages/ack").mock(
+            return_value=httpx.Response(200, json={"status": "ok"})
+        )
+        await auth_client.ack_message("msg-1")
+        auth_header = route.calls[0].request.headers.get("authorization")
+        assert auth_header == "Bearer jwt-test-token"
+
+    @respx.mock
+    async def test_post_result_includes_bearer(self, auth_client):
+        route = respx.post(f"{BASE}/messages").mock(
+            return_value=httpx.Response(201, json={"id": "msg-2"})
+        )
+        await auth_client.post_result(dispatch_id="msg-1", content="ok", success=True)
+        auth_header = route.calls[0].request.headers.get("authorization")
+        assert auth_header == "Bearer jwt-test-token"
+
+    @respx.mock
+    async def test_heartbeat_includes_bearer(self, auth_client):
+        route = respx.post(f"{BASE}/agents/bpsai-computer/heartbeat").mock(
+            return_value=httpx.Response(200, json={"status": "ok"})
+        )
+        await auth_client.heartbeat()
+        auth_header = route.calls[0].request.headers.get("authorization")
+        assert auth_header == "Bearer jwt-test-token"
+
+    @respx.mock
+    async def test_no_bearer_without_token_manager(self, client):
+        """Client without token_manager should not send Authorization header."""
+        route = respx.get(f"{BASE}/messages/feed").mock(
+            return_value=httpx.Response(200, json={"messages": []})
+        )
+        await client.poll_dispatches()
+        auth_header = route.calls[0].request.headers.get("authorization")
+        assert auth_header is None
+
+    @respx.mock
+    async def test_no_bearer_when_token_is_none(self):
+        """When token_manager returns None, no Authorization header sent."""
+        mgr = AsyncMock()
+        mgr.get_token = AsyncMock(return_value=None)
+        client = A2AClient(
+            base_url=BASE, operator="mike", workspace="bpsai",
+            token_manager=mgr,
+        )
+        route = respx.get(f"{BASE}/messages/feed").mock(
+            return_value=httpx.Response(200, json={"messages": []})
+        )
+        await client.poll_dispatches()
+        auth_header = route.calls[0].request.headers.get("authorization")
+        assert auth_header is None

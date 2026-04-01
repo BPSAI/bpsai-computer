@@ -94,3 +94,38 @@ class TestLoadConfig:
                 config_path=Path("/nonexistent/config.yaml"),
                 overrides={"operator": "mike"},  # missing workspace
             )
+
+
+class TestAuthConfigFields:
+    """Test paircoder_api_url and license_id config fields for JWT auth."""
+
+    def test_paircoder_api_url_default(self):
+        cfg = DaemonConfig(operator="mike", workspace="bpsai")
+        assert cfg.paircoder_api_url == "https://api.paircoder.ai"
+
+    def test_license_id_default_none(self):
+        cfg = DaemonConfig(operator="mike", workspace="bpsai")
+        assert cfg.license_id is None
+
+    def test_license_id_custom(self):
+        cfg = DaemonConfig(operator="mike", workspace="bpsai", license_id="lic-123")
+        assert cfg.license_id == "lic-123"
+
+    def test_paircoder_api_url_custom(self):
+        cfg = DaemonConfig(
+            operator="mike", workspace="bpsai",
+            paircoder_api_url="http://localhost:8080",
+        )
+        assert cfg.paircoder_api_url == "http://localhost:8080"
+
+    def test_load_auth_fields_from_yaml(self, tmp_path: Path):
+        config_file = tmp_path / "config.yaml"
+        config_file.write_text(textwrap.dedent("""\
+            operator: mike
+            workspace: bpsai
+            license_id: lic-456
+            paircoder_api_url: https://custom.api.paircoder.ai
+        """))
+        cfg = load_config(config_path=config_file)
+        assert cfg.license_id == "lic-456"
+        assert cfg.paircoder_api_url == "https://custom.api.paircoder.ai"

@@ -4,8 +4,12 @@ from __future__ import annotations
 
 import json
 import logging
+from typing import TYPE_CHECKING
 
 import httpx
+
+if TYPE_CHECKING:
+    from computer.auth import TokenManager
 
 log = logging.getLogger(__name__)
 
@@ -13,13 +17,29 @@ log = logging.getLogger(__name__)
 class A2AClient:
     """HTTP client for the A2A backend."""
 
-    def __init__(self, base_url: str, operator: str, workspace: str) -> None:
+    def __init__(
+        self,
+        base_url: str,
+        operator: str,
+        workspace: str,
+        token_manager: TokenManager | None = None,
+    ) -> None:
         self.base_url = base_url.rstrip("/")
         self.operator = operator
         self.workspace = workspace
+        self._token_manager = token_manager
         self._http = httpx.AsyncClient(
             timeout=httpx.Timeout(connect=5.0, read=10.0, write=10.0, pool=10.0),
         )
+
+    async def _auth_headers(self) -> dict[str, str]:
+        """Return Authorization header if token_manager is configured and token available."""
+        if self._token_manager is None:
+            return {}
+        token = await self._token_manager.get_token()
+        if token is None:
+            return {}
+        return {"Authorization": f"Bearer {token}"}
 
     async def close(self) -> None:
         """Close the underlying HTTP client."""
@@ -34,7 +54,8 @@ class A2AClient:
             "limit": "10",
         }
         try:
-            resp = await self._http.get(f"{self.base_url}/messages/feed", params=params)
+            headers = await self._auth_headers()
+            resp = await self._http.get(f"{self.base_url}/messages/feed", params=params, headers=headers)
             resp.raise_for_status()
             data = resp.json()
             messages = data.get("messages", [])
@@ -47,7 +68,8 @@ class A2AClient:
         """POST /messages/ack to acknowledge a dispatch."""
         payload = {"message_id": message_id, "response": response}
         try:
-            resp = await self._http.post(f"{self.base_url}/messages/ack", json=payload)
+            headers = await self._auth_headers()
+            resp = await self._http.post(f"{self.base_url}/messages/ack", json=payload, headers=headers)
             resp.raise_for_status()
         except (httpx.HTTPError, Exception) as exc:
             log.warning("Ack failed for %s: %s", message_id, exc)
@@ -72,7 +94,8 @@ class A2AClient:
             }),
         }
         try:
-            resp = await self._http.post(f"{self.base_url}/messages", json=payload)
+            headers = await self._auth_headers()
+            resp = await self._http.post(f"{self.base_url}/messages", json=payload, headers=headers)
             resp.raise_for_status()
         except (httpx.HTTPError, Exception) as exc:
             log.warning("Post result failed for %s: %s", dispatch_id, exc)
@@ -103,7 +126,8 @@ class A2AClient:
             }),
         }
         try:
-            resp = await self._http.post(f"{self.base_url}/messages", json=payload)
+            headers = await self._auth_headers()
+            resp = await self._http.post(f"{self.base_url}/messages", json=payload, headers=headers)
             resp.raise_for_status()
         except (httpx.HTTPError, Exception) as exc:
             log.warning("Post session output failed for %s: %s", session_id, exc)
@@ -124,7 +148,8 @@ class A2AClient:
             "content": json.dumps({"session_id": session_id, **data}),
         }
         try:
-            resp = await self._http.post(f"{self.base_url}/messages", json=payload)
+            headers = await self._auth_headers()
+            resp = await self._http.post(f"{self.base_url}/messages", json=payload, headers=headers)
             resp.raise_for_status()
         except (httpx.HTTPError, Exception) as exc:
             log.warning("Post lifecycle %s failed for %s: %s", event_type, session_id, exc)
@@ -132,9 +157,11 @@ class A2AClient:
     async def heartbeat(self) -> None:
         """POST heartbeat to /agents/bpsai-computer/heartbeat."""
         try:
+            headers = await self._auth_headers()
             resp = await self._http.post(
                 f"{self.base_url}/agents/bpsai-computer/heartbeat",
                 json={"state": "running", "current_task": "Polling for dispatches", "interval_minutes": 1},
+                headers=headers,
             )
             resp.raise_for_status()
         except (httpx.HTTPError, Exception) as exc:

@@ -24,6 +24,8 @@ class DaemonConfig:
     workspace: str
     workspace_root: str = field(default_factory=_default_workspace_root)
     a2a_url: str = "https://a2a.paircoder.ai"
+    paircoder_api_url: str = "https://api.paircoder.ai"
+    license_id: str | None = None
     poll_interval: int = 5
     process_timeout: int = 1800
     stream_batch_interval: float = 2.0
