@@ -1,0 +1,42 @@
+id: HYP-012
+title: "Cross-stack work has no calibration baseline \u2014 TypeScript/React effort\
+  \ unknown"
+observed: 2026-03-28
+status: actionable
+last_reviewed: '2026-04-07'
+review_after: First 3 Lounge dispatches with telemetry hooks produce comparison data
+source: Ecosystem telemetry audit (2026-03-28)
+pattern: '0 telemetry from Lounge (TS/React/Three.js). All calibration from Python.
+  Lounge sprints completed in 4-21 min but no token/effort data. Hooks now added.
+
+  '
+confidence: 0.7
+evidence_count: 63
+evidence_sources:
+- type: telemetry
+  field: per-repo telemetry records
+  exists: true
+  location: telemetry.jsonl per repo
+- type: lounge_telemetry
+  field: TypeScript/React session data
+  exists: false
+  needed: "First Lounge dispatches with telemetry hooks \u2014 just added"
+scoring_audit: "2026-03-29 audit: True gap \u2014 0 telemetry from Lounge. Hooks just\
+  \ added in v2.18.0 but no data collected yet. Review criteria (3 dispatches with\
+  \ telemetry) not met. Confidence adjusted from 0.82 to reflect no actual comparison\
+  \ data exists."
+status_history:
+- from: observed
+  to: actionable
+  date: '2026-03-28'
+  reason: Confidence 0.82 >= 0.70 with 6 evidence items
+- from: observed
+  to: actionable
+  date: '2026-03-30'
+  reason: Confidence 0.70 >= 0.70 with 36 unique evidence items
+evidence_hashes:
+- 18a933641d0260b5
+- 50d351bda3a9a429
+- 7d480b8895d88ec0
+- a82e00710eb4074e
+- e372a64e400c7aed

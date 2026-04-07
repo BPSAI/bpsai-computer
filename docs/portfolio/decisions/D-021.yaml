@@ -1,0 +1,60 @@
+id: D-021
+title: "Twins serve three roles: content generation, Lounge perspective, human intent preservation"
+date: 2026-03-26
+status: decided
+authors: [David, Computer]
+source: Session discussion — twin architecture in autonomous system
+
+decision: >
+  Digital twins (David twin, Mike twin) are not just content generators.
+  They serve three distinct roles that reinforce each other: (1) voice-authentic
+  content generation for public-facing output, (2) perspective representation
+  in the Agent Lounge where they carry the founders' reasoning patterns into
+  agent-to-agent discussions, and (3) human intent preservation as the system
+  gains autonomy — the "would the founders approve?" anchor.
+
+roles:
+  content_generation:
+    description: >
+      Draft blog posts, Reddit comments, LinkedIn content in the founder's
+      authentic voice. Voice engine + profile + enforcement pipeline.
+    invoked_by: "Computer, CLI command, A2A skill call"
+    output: "Draft text for human review"
+
+  lounge_perspective:
+    description: >
+      When agents reason about architectural decisions or product direction,
+      the twins evaluate proposals against internalized models of how David
+      and Mike reason. Not a vote — a perspective check. Carries judgment
+      patterns from voice profiles, editing history, grounded memories.
+    invoked_by: "Lounge exchange protocol (epistemic evaluation)"
+    output: "Weighted perspective with reasoning trace"
+
+  intent_preservation:
+    description: >
+      As Computer gains autonomy (dispatching sprints, adapting thresholds,
+      reasoning about patterns), twins anchor the system to founder intent.
+      Prevents drift between what the system does and what David/Mike want.
+      The recursive enforcement principle (D-013) applied to human values.
+    invoked_by: "Automatic during Lounge exchanges, queryable by Computer"
+    output: "Alignment signal — congruent/divergent with reasoning"
+
+a2a_migration_path:
+  today: "Framework has voice engine, invoked locally by Navigator"
+  fw_s10: "Extract to bpsai-voice-engine package (pip installable)"
+  a2a: >
+    Voice engine registers as A2A handler: generate(profile, platform, prompt),
+    evaluate(text, profile). Twins are voice engine deployments with specific
+    profiles + grounded memories.
+  lounge: >
+    Twins register as Lounge participants AND A2A handlers. Content generation
+    via A2A call. Perspective evaluation via Lounge exchange protocol.
+
+implications:
+  - "FW-S10 scope expands: not just 'make a package' but 'build foundation for human reasoning proxies'"
+  - "Twin voice profiles need grounded memory integration, not just static YAML"
+  - "Lounge protocol must support human-proxy participants (different trust/weight model than pure agents)"
+  - "Content generation is a skill any agent invokes, not a standalone bot"
+
+related: [D-013, D-020, D-017]
+portfolio_items: [29, 38, 11]

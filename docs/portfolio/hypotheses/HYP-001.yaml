@@ -1,0 +1,52 @@
+id: HYP-001
+title: Driver structural query token efficiency
+observed: 2026-03-10
+status: actionable
+last_reviewed: '2026-03-31'
+review_after: QS-2a ships + 50 driver tasks recorded
+pattern: 'Driver agents may spend disproportionate tokens on structural code exploration
+  (grep-based file traversal).
+
+  '
+options:
+  a: Code graph MCP per repo (existing OSS tool, Go binary, tree-sitter + SQLite)
+  b: Selective pre-indexing via workspace-index.yaml expansion
+  c: "Acceptable cost \u2014 no action"
+current_signal: 'Anecdotal (external benchmarks show 20-120x token savings). No BPS-specific
+  telemetry yet.
+
+  '
+instrumentation_needed: 'Tag structural_query_tokens vs generation_tokens vs test_tokens
+  in session outcome recording (QS-2a).
+
+  '
+confidence: 0.7
+evidence_count: 38
+scoring_audit: '2026-03-29 audit: Zero BPS-specific telemetry. Anecdotal + external
+  benchmarks only. structural_query_tokens field does not exist in codebase. QS-2a
+  not shipped. Confidence reset from 0.7478.'
+evidence_sources:
+- type: telemetry
+  field: tokens_input/tokens_output
+  exists: true
+  location: telemetry.jsonl
+- type: telemetry
+  field: structural_query_tokens
+  exists: false
+  needed: Tag token types in session recording
+- type: calibration
+  field: task duration by type
+  exists: true
+  location: calibration.json
+status_history:
+- from: observed
+  to: actionable
+  date: '2026-03-28'
+  reason: Confidence 0.70 >= 0.70 with 22 evidence items
+- from: observed
+  to: actionable
+  date: '2026-03-31'
+  reason: Confidence 0.70 >= 0.70 with 38 unique evidence items
+evidence_hashes:
+- 1ff8d4b16a317d0d
+- de74325e2f13090c

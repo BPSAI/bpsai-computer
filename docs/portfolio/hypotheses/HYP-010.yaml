@@ -1,0 +1,35 @@
+id: HYP-010
+title: "Session failure rate is artificially high \u2014 fail conflates operational\
+  \ stops with code failures"
+observed: 2026-03-28
+status: closed_validated
+last_reviewed: '2026-04-07'
+review_after: Fail subcategory decomposition implemented in PairCoder telemetry
+closed_at: '2026-03-29'
+closed_reason: "Fail decomposition shipped in v2.18.1 (TH1.1). outcome_detail (USER_STOP,\
+  \ COMPACTION, RATE_LIMIT, CODE_FAILURE, TIMEOUT) now recorded on all sessions via\
+  \ classify_fail_detail(). Hypothesis validated \u2014 fail WAS conflated. Pending:\
+  \ enough new telemetry to measure real failure rate."
+source: Ecosystem telemetry audit (2026-03-28)
+pattern: "57.2% of 828 sessions marked fail. Most are user-terminated (Ctrl+C), compaction,\
+  \ rate limits \u2014 not code failures. Calibration data skewed.\n"
+confidence: 1.0
+evidence_count: 66
+evidence_sources:
+- type: telemetry
+  field: outcome field
+  exists: true
+  location: telemetry.jsonl
+- type: telemetry
+  field: fail subcategories (user_stop/compaction/rate_limit/code_failure)
+  exists: true
+  location: TelemetryCollector._create_record() via classify_fail_detail()
+scoring_audit: '2026-03-29 audit: Hard data (57.2% of 828 sessions marked fail). OutcomeDetail
+  enum and classify_fail_detail() exist in schema.py but only wired in headless_runner.py,
+  not main collector. Fail decomposition partially shipped in v2.18.0. Strong hypothesis
+  with clear fix path.'
+status_history:
+- from: observed
+  to: actionable
+  date: '2026-03-28'
+  reason: Confidence 0.80 >= 0.70 with 3 evidence items

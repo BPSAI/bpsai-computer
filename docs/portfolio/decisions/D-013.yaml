@@ -1,0 +1,34 @@
+id: D-013
+title: CNS consumes PairCoder recursively — one enforcement track, two scales
+date: 2026-03-25
+status: decided
+authors: [David, Computer]
+source: Session discussion
+
+decision: >
+  The CNS (Framework Navigator / Computer) is governed by PairCoder in the same
+  way every project Navigator is. Custom skills and elevated responsibilities are
+  extensions of PairCoder's enforcement, not parallel systems. Updates to PairCoder's
+  enforcement, orchestration, and skill discovery recursively improve the CNS.
+
+reasoning: >
+  Running two enforcement tracks (one for the product, one for the CNS) creates
+  drift and maintenance burden. The recursive model means PairCoder improvements
+  cascade automatically: better review workflows improve CNS PR reviews, better
+  telemetry improves CNS sprint monitoring, better skill discovery generates
+  CNS-specific skills organically. The CNS is PairCoder's most demanding consumer —
+  if it works for the CNS at portfolio scale, it works for any user at project scale.
+
+alternatives_rejected:
+  - "Separate CNS governance system — creates two maintenance tracks, divergence inevitable"
+  - "CNS operates without enforcement — loses the self-improvement loop entirely"
+
+implications:
+  - PairCoder CLI must be installed and initialized in the framework repo
+  - Framework CLAUDE.md extends PairCoder's base rules, does not replace them
+  - Releasing-versions and other custom skills live in framework, not CLI template
+  - When PairCoder ships a new enforcement gate, the CNS gets it on next upgrade
+  - The goal is for PairCoder to enforce better CNS behavior without the CNS needing to remember process
+
+related: [D-007, D-006]
+portfolio_items: [29, 30]

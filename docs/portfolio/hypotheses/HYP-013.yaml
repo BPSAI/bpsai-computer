@@ -1,0 +1,50 @@
+id: HYP-013
+title: "Navigator speed improves with codebase maturity \u2014 velocity accelerates\
+  \ over sprints"
+observed: 2026-03-28
+status: actionable
+last_reviewed: '2026-04-07'
+review_after: Track cx/minute per sprint per project across 10+ sprints
+source: Ecosystem telemetry audit (2026-03-28)
+pattern: 'Lounge cx/min: S2=6.2, S3=4.0, S4=8.6, Level2=15.0, Creative=15.0. Larger
+  codebase provides more patterns, components, conventions for Navigator to reuse.
+
+  '
+confidence: 0.7
+evidence_count: 27
+evidence_reinflation_note: Evidence re-inflated from 5 data points to 37 via Metis
+  cycles. Reset to 5 (the actual sprint velocity measurements). Non-monotonic dip
+  in S3 contradicts the hypothesis. Downgraded to observed until 10+ sprints collected.
+  Confidence lowered to reflect weak/contradictory evidence.
+evidence_sources:
+- type: git
+  field: commit timestamps per sprint
+  exists: true
+  location: git log
+- type: calibration
+  field: cx/minute per sprint
+  exists: false
+  needed: Track and store cx/minute metric in calibration.json per sprint
+scoring_audit: '2026-03-29 audit: 5 data points from Lounge sprints. Non-monotonic
+  (S3 dipped to 4.0). cx/minute metric defined in schema but not stored in calibration.json
+  per sprint. Needs 10+ sprints per own review criteria. Confidence adjusted from
+  0.98 to reflect thin evidence.'
+status_history:
+- from: observed
+  to: actionable
+  date: '2026-03-28'
+  reason: Confidence 0.79 >= 0.70 with 13 evidence items
+- from: observed
+  to: actionable
+  date: '2026-03-30'
+  reason: Confidence 0.70 >= 0.70 with 37 unique evidence items
+- from: observed
+  to: actionable
+  date: '2026-04-03'
+  reason: Confidence 0.70 >= 0.70 with 11 unique evidence items
+evidence_hashes:
+- 3d11e50bcb4b4da9
+- 424a5dd7a220429a
+- 56ea20e855052ece
+- 771b4e9930901a16
+- a3f7d12aec53a5ee

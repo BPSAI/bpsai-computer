@@ -1,0 +1,75 @@
+id: HYP-014
+title: Headless agent sessions degrade behavioral compliance vs interactive sessions
+status: actionable
+confidence: 0.7
+last_reviewed: '2026-03-30'
+review_after: 10 more headless sprints with commit-after-task enabled, compared against
+  interactive baseline
+pattern: "Headless Claude Code sessions dispatched via bpsai-pair engage exhibit systematically\n\
+  degraded behavioral compliance compared to interactive sessions with identical permissions.\n\
+  Observed across 4 sprints / 10 tasks on 2026-03-29:\n- 0/10 tasks produced git commits\
+  \ (interactive sessions always commit)\n- 1/10 tasks updated task lifecycle status\
+  \ (interactive sessions do this reliably)\n- 1/4 sprints had TDD cycle completion\
+  \ failure (tests written, implementation skipped)\n- 3/4 sprints had sequential\
+  \ drivers clobber earlier drivers' file changes\n- CLAUDE.md enforcement instructions\
+  \ present in both modes but not followed in headless\n\nThe degradation pattern\
+  \ suggests headless mode lacks a feedback mechanism that interactive\nmode provides\
+  \ implicitly \u2014 either human presence as accountability signal, or interactive\n\
+  hook responses that headless mode skips.\n\nStrategic concern: the entire engage\
+  \ pipeline depends on Claude Code headless mode. This\ncreates (a) provider lock-in\
+  \ (enforcement is CC-specific hooks, not portable), and\n(b) behavioral dependency\
+  \ on a mode that demonstrably underperforms. If headless reliability\ncannot be\
+  \ brought to parity with interactive, the autonomous sprint model needs rearchitecting.\n"
+options:
+- '(a) Fix headless context: inject stronger enforcement prompts, add commit-after-task
+  to engage'
+- (b) Investigate CC documentation for headless best practices we may be missing
+- (c) Abandon headless, use interactive sessions with programmatic input (expect-style)
+- '(d) Abstract the dispatch layer: provider-agnostic agent runner that can target
+  CC, Codex, or others'
+- (e) Accept degradation, add HITL verification after headless sprints
+evidence:
+- '2026-03-29: 10 headless tasks, 0 commits, 1/10 lifecycle updates'
+- '2026-03-29: RF1.3 driver wrote 20 tests, implemented 7 (TDD red phase only)'
+- '2026-03-29: PF1.1 driver clobbered HF1.1+HF1.2 changes to collector.py'
+- '2026-03-29: CW1.1 driver reverted HF1.3 sprint_executor.py changes'
+- '2026-03-29: --max-parallel flag ignored, all tasks ran sequentially'
+- 'Interactive sessions with bypassPermissions: full compliance observed across G1-G3
+  sprints'
+evidence_sources:
+- type: telemetry
+  field: session outcome by dispatch mode (headless vs interactive)
+  exists: false
+  needed: Tag dispatch_mode in telemetry recording
+- type: git
+  field: commit count per headless session
+  exists: true
+  location: git log correlated with session timestamps
+- type: telemetry
+  field: task lifecycle command invocations per session
+  exists: false
+  needed: Track bpsai-pair task update calls in session telemetry
+instrumentation_needed: '1. Tag dispatch_mode (headless vs interactive) on every telemetry
+  record
+
+  2. Track lifecycle command invocations (task update, ttask done) per session
+
+  3. Track commit count per session
+
+  4. Compare compliance rates: TDD completion, lifecycle updates, commits, file preservation
+
+  '
+threshold: Headless compliance rate < 80% of interactive compliance rate across 10+
+  sprints
+scoring_audit: "2026-03-29: Initial observation from first real engage test. 4 sprints,\
+  \ 10 tasks, consistent degradation pattern. Confidence 0.65 reflects strong signal\
+  \ but single test session \u2014 needs more data points across different task types\
+  \ and complexity levels."
+evidence_count: 3
+evidence_hashes:
+- 0164ceac8330c391
+status_history:
+- from: observed
+  to: actionable
+  date: '2026-03-30'
+  reason: Confidence 0.70 >= 0.70 with 3 unique evidence items

@@ -1,0 +1,45 @@
+id: HYP-002
+title: CNS signal reception requires push delivery
+observed: 2026-03-10
+status: closed_validated
+last_reviewed: 2026-03-29
+review_after: Sprint 43 coordination channel plugin built
+closed_at: 2026-03-29
+closed_reason: "Push delivery shipped: coordination channels (v2.18.0), Metis briefing generator + channel push (MB1.1-MB1.2), Computer Sense briefing reader (MB1.5), signal source tagging (TH1.4). All evidence_sources exist. Hypothesis validated and resolved."
+pattern: 'CNS receives signals manually (human-initiated platform change triage, relayed
+  retrospectives, paste-driven audience intel). Signal reception is the one step that
+  still requires human initiation.
+
+  '
+options:
+  a: "Automate signal reception directly in CNS \u2014 platform-check creates issue,\
+    \ CNS auto-triages"
+  b: "Dedicated signal aggregation agent \u2014 owns storage, categorization, retrieval"
+  c: "Hybrid \u2014 CNS handles low-volume strategic signals, aggregation agent handles\
+    \ high-volume telemetry"
+current_signal: 'Platform change triage took <5 min but only happened because David
+  prompted it. Two issues sat open for days. API retrospective only reached CNS via
+  human transcript relay. Push delivery now available via native channels (Claude
+  Code v2.1.80).
+
+  '
+instrumentation_needed: 'Track: (1) time-to-triage for platform change issues, (2)
+  signal sources per session (human-relayed vs automated), (3) context window consumption
+  per signal type.
+
+  '
+resolution: "Claude Code v2.1.80 channels (2026-03-19) delivered the missing push\
+  \ primitive. Domain routing via bpsai-coordination channel plugin (CLI-S43). Volume/latency\
+  \ question resolved \u2014 CNS receives push notifications natively.\n"
+confidence: 0.8
+evidence_count: 3
+scoring_audit: "2026-03-29 audit: Coordination channels shipped (v2.18.0). Push delivery primitive exists. Review criteria met. Candidate for closure once signal source tagging validates automated vs human ratio."
+evidence_sources:
+- type: channel_messages
+  field: message count and latency
+  exists: true
+  location: a2a.paircoder.ai/messages
+- type: telemetry
+  field: signal_source (human vs automated)
+  exists: true
+  location: signal_emitter.py SignalSource enum (HUMAN/AUTOMATED/METIS) via TH1.4

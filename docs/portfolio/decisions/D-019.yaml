@@ -1,0 +1,31 @@
+id: D-019
+title: "Effort values: S/M/L only (no XS or XL)"
+date: 2026-03-25
+status: decided
+authors: [David, Computer]
+source: CLI bps-board-conventions.md (reconciliation item #21)
+
+decision: >
+  Task effort estimation uses exactly three values:
+  S (Small, 0-30 complexity), M (Medium, 31-60 complexity), L (Large, 61-100 complexity).
+  No XS or XL values exist. Tasks exceeding L should be decomposed.
+
+reasoning: >
+  Three-point estimation is sufficient for sprint planning. XS creates false precision
+  (a 10cx task and a 25cx task both fit in one cycle). XL signals a task that should be
+  split — if it's too big for L, it's too big for a single task. Keeping to three values
+  also matches Trello custom field dropdown constraints and simplifies budget calculations.
+
+alternatives_rejected:
+  - "Five-point scale (XS/S/M/L/XL) — false precision, XL encourages monolithic tasks"
+  - "Numeric complexity only — loses the human-readable label for quick scanning"
+  - "Fibonacci (1/2/3/5/8/13) — more values than needed, confusing for non-developers"
+
+implications:
+  - Trello board effort dropdown has exactly three values
+  - Budget calculations use S=30, M=60, L=100 as upper bounds
+  - Tasks estimated above L must be decomposed before sprint planning
+  - This applies to all BPS projects uniformly
+
+related: []
+portfolio_items: []

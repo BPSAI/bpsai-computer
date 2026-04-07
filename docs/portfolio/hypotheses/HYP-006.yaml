@@ -1,0 +1,74 @@
+id: HYP-006
+title: Value stream instrumentation ROI increases as agent autonomy scales
+observed: 2026-03-26
+status: actionable
+last_reviewed: '2026-04-07'
+review_after: Computer Sense+Learn (FW-S11) ships OR cross-repo sprint count exceeds
+  3 parallel
+pattern: "The development value stream is uninstrumented, but the team is small enough\
+  \ (solo/duo + agents) that bottlenecks are visible by intuition today. The known\
+  \ bottleneck (human cognition/trust in agent output) is structural, not a flow problem\
+  \ VSM typically reveals. However, as agent autonomy increases (Computer loop, Metis,\
+  \ coordination channels) and cross-repo coordination grows (5+ repos, A2A, sprint\
+  \ sequencing), the value stream shifts from human-driven to agent-driven \u2014\
+  \ and agent bottlenecks are not visible by intuition. VSM ROI may be low now but\
+  \ inevitable at scale.\n"
+options:
+  a: "Do nothing now \u2014 revisit when Computer loop is executing autonomous sprints\
+    \ (FW-S12)"
+  b: 'Piggyback on QS-3/QS-4: add gate timestamps to existing telemetry as it ships,
+    zero marginal cost'
+  c: 'Agent-native VSM: Computer Sense+Learn (FW-S11) tracks its own value stream
+    as part of the loop'
+  d: "Full standalone VSM instrumentation sprint \u2014 premature unless (a) or (b)\
+    \ surface signal"
+current_signal: "No inflection indicators have fired. Telemetry aggregate shipped\
+  \ in v2.19.1 (2026-03-30) with statusline heartbeat for idle detection. Option (b)\
+  \ \u2014 piggyback on existing telemetry \u2014 is the recommended path. Gate timestamps\
+  \ can be added to aggregate output at near-zero cost. No dedicated VSM sprint needed\
+  \ until Computer loop executes autonomous plans."
+decision: 'Option (b): piggyback on telemetry aggregate (v2.19.1). Gate timestamps
+  will be added to existing telemetry as Computer Sense+Learn ships. Revisit if an
+  inflection indicator fires.'
+decision_date: '2026-03-30'
+inflection_indicators:
+- Computer loop executing multi-step plans without human initiation (FW-S12)
+- 3+ parallel cross-repo sprints with sequencing dependencies
+- Agent-to-agent handoffs where neither human sees the queue
+- An incident caused by invisible wait time between agent-driven stages
+instrumentation_needed: 'None yet. Watch for inflection indicators. If option (b)
+  is chosen, gate timestamps can be added to QS-3/QS-4 telemetry at near-zero cost
+  when those features ship.
+
+  '
+threshold: An inflection indicator fires, OR QS-4 telemetry reveals unexplained wait
+  time in agent-driven flows
+metric_scaling: "Agent-to-agent handoffs operate on seconds/minutes, not days/weeks.\
+  \ Human-scale VSM thresholds (e.g., \"30% wait time\") will dismiss agent-flow bottlenecks\
+  \ as noise. Metrics must be normalized relative to the flow speed of the stage,\
+  \ not absolute time. A 30-second queue in a 4-minute agent cycle is the same signal\
+  \ as a 3-day queue in a 2-week human sprint. Weak signals at small timescales should\
+  \ not be immediately rejected \u2014 they may indicate structural bottlenecks that\
+  \ compound at volume. Threshold design is itself an open question: fixed percentages,\
+  \ standard deviations from baseline, or anomaly detection against the flow's own\
+  \ history.\n"
+confidence: 1.0
+evidence_count: 103
+scoring_audit: '2026-03-29 audit: Theoretical. File itself states ''no signal that
+  current bottlenecks are non-obvious.'' No inflection indicator has fired. Computer
+  Sense+Learn not executing autonomous sprints. Evidence count 50 is pure cycle repetition.
+  Confidence reset from 1.0.'
+status_history:
+- from: observed
+  to: actionable
+  date: '2026-03-27'
+  reason: Confidence 0.74 >= 0.70 with 22 evidence items
+- from: observed
+  to: actionable
+  date: '2026-03-30'
+  reason: Confidence 0.79 >= 0.70 with 70 unique evidence items
+evidence_hashes:
+- 3bd7609d92345f45
+- 4c4703a487d8b32e
+- 55f941f47618bf32
+- 5e1c7f9c94d16012

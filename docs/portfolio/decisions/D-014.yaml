@@ -1,0 +1,36 @@
+id: D-014
+title: "PM Architecture: A2A over embedding"
+date: 2026-03-25
+status: decided
+authors: [David, Computer]
+source: CLI backlog.md (reconciliation item #3)
+
+decision: >
+  Project management integration follows five principles:
+  (1) A2A over embedding — PM tools are external services, not embedded dependencies.
+  (2) Separate ABCs + shared protocol — each PM provider has its own ABC, all share A2A JSON-RPC protocol.
+  (3) Async at framework, sync at boundary — framework defines async ABCs, SyncProviderAdapter converts for CLI consumers.
+  (4) Trigger + discover — PM events trigger agent actions, agent discovery exposes PM capabilities.
+  (5) Presets are data not code — board configuration, field mappings, and workflow presets are YAML data, not Python logic.
+
+reasoning: >
+  Embedding PM logic (Trello API calls, Jira webhooks, etc.) into the CLI creates tight coupling
+  and makes the framework PM-specific. A2A-first means PM integration is a skill that any agent
+  can consume, new PM tools are added by writing a provider (not modifying core), and the
+  framework stays PM-agnostic. The async/sync boundary is already solved by SyncProviderAdapter
+  (FW-S5). Presets-as-data means board conventions (effort values, list names) are portable
+  across projects without code changes.
+
+alternatives_rejected:
+  - "Embed Trello SDK directly — creates Trello lock-in, violates provider pattern convergence"
+  - "Sync-only PM providers — forces sync on framework internals, loses composition with async pipeline"
+  - "Code-based presets — makes board configuration a code change instead of a config change"
+
+implications:
+  - New PM providers implement the PM ABC and register via TypedRegistry
+  - Board conventions (effort, lists, fields) live in YAML config, not code
+  - PM events flow through the same signal/route/dispatch pattern as all other providers
+  - Trello abstraction stops at Trello (D-003) but the pattern supports future PM tools
+
+related: [D-003, D-005, D-006]
+portfolio_items: []

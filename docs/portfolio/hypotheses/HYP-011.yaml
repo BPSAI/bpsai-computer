@@ -1,0 +1,39 @@
+id: HYP-011
+title: "46% of sessions lack task type classification \u2014 calibration blind spot"
+observed: 2026-03-28
+status: closed_validated
+last_reviewed: '2026-04-07'
+review_after: Intent detection and automatic task classification shipped
+closed_at: '2026-03-29'
+closed_reason: "All 381 'unknown' records were phantom TASK-001 bug \u2014 a collector\
+  \ fallback that fired when no task was active (Feb 15 - Mar 11). Bug was fixed by\
+  \ Sprint 38. After archiving phantom records: 213 real records, 0 unknowns, 0% unknown\
+  \ rate. The hypothesis was correct that there was a gap, but the root cause was\
+  \ a collector bug, not missing intent detection. Intent\u2192telemetry wiring (TH1.3)\
+  \ shipped as additional protection."
+source: Ecosystem telemetry audit (2026-03-28)
+pattern: '381 of 828 sessions had task_type=unknown. Root cause: phantom TASK-001
+  collector bug, not missing intent detection. All 381 unknowns were the same phantom
+  task ID. Bug fixed by Sprint 38 lifecycle improvements. Telemetry cleaned 2026-03-29.
+
+  '
+confidence: 1.0
+evidence_count: 97
+evidence_sources:
+- type: telemetry
+  field: task_type field
+  exists: true
+  location: telemetry.jsonl
+- type: session_analysis
+  field: correlation of unknown type with session patterns
+  exists: true
+  location: "IntentDetector \u2192 TelemetryCollector via TH1.3 wiring"
+scoring_audit: "2026-03-29 audit: Hard data (381/828 = 46% task_type=unknown). IntentDetector\
+  \ exists and classifies 9 types but is not wired to TelemetryCollector. Clear measurable\
+  \ gap with known fix. Standup shows observed but YAML had actionable \u2014 actionable\
+  \ is correct given data quality."
+status_history:
+- from: observed
+  to: actionable
+  date: '2026-03-28'
+  reason: Confidence 1.00 >= 0.70 with 6 evidence items

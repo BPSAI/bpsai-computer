@@ -1,0 +1,37 @@
+id: D-016
+title: "Content safety two-tier model"
+date: 2026-03-25
+status: decided
+authors: [David, Computer]
+source: API content_safety.md (reconciliation item #5)
+
+decision: >
+  Content safety operates in two tiers:
+  Tier 1 (internal) — applies to all content from all sources within the agent's own pipeline.
+  Validates field-level granularity (title, body, tags separately). Includes security keyword
+  filtering on titles to prevent leaking internal terms.
+  Tier 2 (A2A public) — applies to content exposed via A2A skills to external consumers.
+  Additional filtering layer that removes internal-only fields and applies stricter thresholds.
+  External consumers never see raw internal content.
+
+reasoning: >
+  A single safety tier forces a choice between too-strict (blocks legitimate internal use)
+  and too-loose (exposes sensitive content via A2A). Two tiers match the trust boundary:
+  internal agents are trusted with full content, external agents get filtered views.
+  Field-level granularity prevents over-blocking — a post body might be safe while its
+  title contains a security-sensitive project name. The security keyword filter on titles
+  is a lightweight static gate that catches the most common leak vector.
+
+alternatives_rejected:
+  - "Single tier for all consumers — either too strict internally or too loose externally"
+  - "Binary allow/block per content item — loses field-level nuance"
+  - "LLM-based safety classification — too expensive for high-throughput content pipeline"
+
+implications:
+  - Every A2A skill that returns content must apply Tier 2 filtering
+  - Internal pipelines apply Tier 1 only (lower overhead)
+  - Security keyword list is maintained as data (YAML), not code
+  - This pattern is reusable across any multi-agent content safety scenario
+
+related: [D-006, D-010]
+portfolio_items: []

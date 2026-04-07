@@ -1,0 +1,592 @@
+# Portfolio Status — Machine-readable, always current
+# Query: bpsai-pair status --portfolio (future), or read directly
+# Updated: 2026-04-07 afternoon (v2.21.4 released, Iris S13 reviewed, Amunet S4 complete, Metis fixed)
+# NOTE: For priority decisions, also read execution-priorities.md
+
+repos:
+  paircoder:
+    shortcode: CLI
+    latest_sprint: CLI-RC
+    sprint_status: complete
+    sprint_theme: "Review Command + Targeted Tests + Engage Fixes"
+    version: 2.21.4
+    tests: 12500+
+    branch: main
+    dev_synced: true
+    v2.21.4_shipped:
+      - "bpsai-pair review pr/branch/task/auto: Python-enforced review dispatch"
+      - "Git-based targeted test runner: engage tasks run scoped tests"
+      - "Engage crash fix: lifecycle hook failures no longer crash executor"
+      - "Engage state file exclusion: .paircoder/ bookkeeping excluded from commits"
+      - "Agent mythology display names in review dispatch and output"
+      - "Review intent sub-classification"
+      - "Error-as-approval fix: failed reviews exit non-zero"
+      - "Task commit resolution: review finds correct commit"
+      - "Fixed-string grep for task ID matching"
+      - "Test instruction wiring to headless driver"
+      - "validate-versions checks PyPI README"
+    v2.21.3_shipped:
+      - "Downgrade guard, version consistency check, validate-versions, fleet check"
+      - "Agent upgrade merges frontmatter (preserves memory, maxTurns)"
+      - "Per-task reviewer loop, findings relay, circuit breaker"
+      - "Pre-PR security-auditor, size-scaled cross-module reviewer"
+      - "PermissionDenied hook, dynamic base branch, JSONL injection fix"
+    issues_closed: [131, 133, 134, 141, 143]
+    next: "CLI-IMS (intent merge strategy) and CLI-EB (dep split) are remaining backlogs. No urgent work."
+
+  paircoder_api:
+    shortcode: API
+    latest_sprint: G1
+    sprint_status: complete
+    sprint_theme: "Queryable Intelligence (global sprint — API track)"
+    g1_done: [G1.H1, G1.H2, G1.H3, G1.10, G1.11]
+    version: null
+    tests: 1378
+    branch: dev
+    dev_synced: true  # dev merged to main 2026-04-06
+    editable_install: true
+    recent_fixes:
+      - "Perpetual license portal handling (clear message instead of generic error)"
+      - "Support auth generate_code/exchange_code now commit to DB"
+      - "Subscription status returns 400/503 for Stripe errors instead of 500"
+    next: "A2A consumer cutover + API cleanup"
+
+  paircoder_bot:
+    shortcode: Bot
+    latest_sprint: G2
+    sprint_status: complete
+    sprint_theme: "Self-Reasoning + Autonomous Communication (Bot track)"
+    tests: 3056
+    branch: main
+    dev_synced: true  # PR #3 merged 2026-03-27, P1 fixes applied
+    editable_install: true  # 2026-03-29
+    metis_deployed: true  # Live on systemd timers (2h cognitive, 6h tick)
+    metis_heartbeat_restarted: true  # 2026-03-29 — confidence ceiling shipped, heartbeat resumed
+    metis_model: "claude-sonnet-4-20250514 (interpretation), qwen3:14b (fallback)"
+    metis_infrastructure: "IdeaBridge, pattern detector (5 detectors), multi-finding tick, adversarial review, cycle memory, Claude API interpretation, coordination channels, session briefings"
+    metis_tests: 388
+    g2_done: [G2.8]
+    s34_done: [T34.1, T34.2, T34.3, T34.4, T34.5, T34.6, T34.7]
+    s34_shipped: "Hypothesis persistence, cognitive standup, cycle dedup, doc integrity in cycle, URL validation, ID matching, stale auto-flag"
+    briefing_sprint_done: true  # generator, channel push, persistence, heartbeat wiring
+    metis_fixes_2026_04_07:
+      - "Fixed 309-cycle loop: name mismatch in exclusion list (paircoder.ai vs website)"
+      - "Removed exclusion list entirely: every workspace project observable"
+      - "Git remote identity: projects identified by Owner/Repo, not local YAML keys"
+      - "Cross-cycle finding dedup: finding_keys stored in CycleEntry, repeats suppressed"
+      - "Standup truncation fix: long hypothesis titles in stale section"
+    next: "Verify Metis produces new findings after dedup fix. S35 planning."
+
+  bpsai-framework:
+    shortcode: FW
+    latest_sprint: LS0
+    sprint_status: complete
+    sprint_theme: "Orchestration loop smoke test + design docs"
+    tests: 1708
+    branch: main
+    dev_synced: true
+    editable_install: true  # 2026-03-29
+    g2_done: [G2.7, G2.D3]
+    g3_done: [G3.P1, G3.P2, G3.P3]
+    th_done: [TH1.1, TH1.2, TH2.1, TH2.2, TH3.1, TH3.2]
+    th_shipped: "Evidence dedup, confidence ceiling, tooling registry, intent-to-telemetry, signal source, sense/learn telemetry"
+    briefing_done: [MB1.4, MB1.5]
+    briefing_shipped: "Lounge briefing panel, Computer Sense briefing reader"
+    heimdall_done: true  # platform sentinel upgrade + Lounge presence
+    shipped:
+      - "Computer Sense + Learn: 9 PhaseHook implementations (5 SENSE, 4 LEARN)"
+      - "Idea lifecycle: IdeaStore, RelevanceScorer, WorkflowConfig, PortfolioIndexer, CaptureSurfaces, Triage"
+      - "Model eval suite: EvalDataset, EvalMetrics, ModelEvaluator"
+      - "Security P2 fixes (path traversal, input validation, body length caps)"
+      - "G3: Dispatch abstraction (engine/dispatch/ package)"
+      - "G3: Sprint planner (PlanningContext, SprintBacklog, backlog renderer/deliverer/parser)"
+      - "G3: Navigator dispatch orchestrator (plan_and_propose, dispatch, monitor, review)"
+      - "TH: Evidence dedup, confidence ceiling, tooling registry, intent-to-telemetry, signal source"
+      - "TH: Sense + Learn hook telemetry (SenseEvent, LearnEvent)"
+      - "Metis briefing: generator, channel push, persistence, heartbeat wiring"
+      - "MB1.5: BriefingReader SENSE hook"
+      - "Heimdall: platform sentinel upgrade + Lounge presence"
+    new_modules:
+      - engine/orchestration/sense/ (6 modules)
+      - engine/orchestration/learn/ (5 modules)
+      - engine/idea_store.py
+      - engine/idea_workflow.py
+      - engine/idea_capture.py
+      - engine/idea_triage.py
+      - engine/relevance_scorer.py
+      - engine/portfolio_indexer.py
+      - engine/eval_dataset.py
+      - engine/eval_metrics.py
+      - engine/model_evaluator.py
+      - engine/dispatch/ (config.py, classifier.py, dispatcher.py, orchestrator.py)
+      - engine/sprint_planner.py
+      - engine/sprint_planner_types.py
+      - engine/sprint_planner_parsers.py
+      - engine/backlog_renderer.py
+      - engine/backlog_deliverer.py
+      - engine/backlog_parser.py
+      - engine/orchestration/dispatch/dispatch_hook.py
+      - engine/orchestration/enforce/review_hook.py
+      - engine/orchestration/learn/dispatch_outcome_hook.py
+
+  bpsai-a2a:
+    shortcode: A2A
+    latest_sprint: A2A-KV
+    sprint_status: in_progress
+    sprint_theme: "Key Vault integration + UAT contract tests"
+    tests: 200+
+    branch: main
+    deployed: true  # 2026-03-27 — a2a.paircoder.ai live, TLS bound, CI/CD active
+    infrastructure:
+      container_app: ca-bpsai-a2a-cus-prod
+      database: bpsai_a2a (shared server pgsql-paircoder-db1-cus-prod)
+      dns: a2a.paircoder.ai (CNAME + managed TLS)
+      registry: ghcr.io/bpsai/bpsai-a2a
+      deploy_workflow: .github/workflows/deploy.yml (push to main)
+    recent_shipped:  # 2026-03-30/31 (Mike)
+      - "POST /agents/{name}/heartbeat — agent runtime state reporting"
+      - "GET /agents/status — latest heartbeat per agent"
+      - "GET /messages/feed — firehose with cursor pagination"
+      - "operator + workspace columns on ChannelMessage"
+      - "Per-agent stale threshold via heartbeat_interval"
+      - "Bug fixes: stale flag, unused import, cursor test"
+      - "CORS: command.paircoder.ai + agentlounge.ai allowed"
+    next: "Consumer cutover (Bot, CLI, distillation → a2a.paircoder.ai), Phase 4 hardening"
+    new_endpoints:  # Added 2026-03-30
+      - "GET /messages/feed — firehose with cursor pagination"
+      - "GET /agents/status — per-agent heartbeat with stale threshold"
+      - "POST /agents/{name}/heartbeat — upsert agent state with interval_minutes"
+      - "operator + workspace fields on ChannelMessage"
+
+  bpsai-command-center:
+    shortcode: CC
+    latest_sprint: CC-UA
+    sprint_status: in_progress
+    sprint_theme: "OAuth login + license link + UAT contract tests"
+    tests: 200+
+    branch: main
+    deployed: true  # 2026-03-30 — command.paircoder.ai live
+    infrastructure:
+      container_app: ca-command-center-cus-prod
+      dns: command.paircoder.ai (CNAME + managed TLS)
+      registry: ghcr.io/bpsai/bpsai-command-center
+      deploy_workflow: .github/workflows/deploy.yml (push to main)
+    features:
+      - "5-panel layout: Activity Feed, Agent Grid, Computer Chat, Notifications, Standup"
+      - "Dark sci-fi ship theme with scanlines"
+      - "SSE real-time activity feed with hologram hover detail"
+      - "Claude API Computer Chat (streaming)"
+      - "Basic auth (per-user planned in CC-S4)"
+      - "Responsive mobile with tabbed navigation"
+    next: "UA sprint: OAuth login + license link + portal JWT (Mike)"
+
+  bpsai-agents:
+    shortcode: AGT
+    latest_sprint: AF1
+    sprint_status: complete
+    sprint_theme: "Agent Core Phase 1 — extract base package"
+    tests: 90
+    branch: main
+    published: true  # bpsai-agent-core v0.1.0 on PyPI
+    packages:
+      agent-core: "v0.1.0 — BaseAgent, Phase.EXECUTE, QualityProfile, AgentCard, LoopRunner, hooks, enforcement, LLMCall"
+      agent-lounge: "placeholder — Phase 2"
+      agent-enforce: "placeholder — Phase 2"
+    next: "Agent Foundry Phase 2 — multi-plan + first real agent (Vaivora / IT Ops)"
+
+  bpsai-computer:
+    shortcode: CMP
+    latest_sprint: CD1
+    sprint_status: complete
+    sprint_theme: "Computer₀ dispatch daemon"
+    tests: 144
+    branch: main
+    features:
+      - "A2A polling with operator + workspace scoping"
+      - "Claude Code subprocess dispatch"
+      - "Credential scrubbing"
+      - "Heartbeat posting"
+      - "Graceful shutdown"
+      - "Stdout streaming with batched A2A posting"
+      - "Session lifecycle messages (started, complete, failed)"
+      - "Resume command handler"
+    next: "CD3 planning + signal push to A2A (blocked on UA sprint)"
+
+  bpsai-support:
+    shortcode: SUP
+    status: stable
+    tests: 1651
+    components:
+      backend: "Sprint 3 done (611 tests)"
+      functions: "Sprint 9 done (732 tests)"
+      frontend: "Phase 2 done (308+ tests)"
+    next: "Framework pattern adoption (enforcement, A2A)"
+
+  paircoder.ai:
+    shortcode: WEB
+    status: current
+    latest_update: "v2.21.3 + v2.21.2 + v2.21.1 + v2.21.0 changelog entries, 27 pages rebuilt"
+    branch: main
+    dev_synced: true
+
+  bpsai-iris:
+    shortcode: IRIS
+    latest_sprint: S13
+    sprint_status: in_review
+    sprint_theme: "Instructional Content Pipeline (Phase 3)"
+    tests: 3600+
+    branch: main
+    stack: "Python + Playwright + FFmpeg + ElevenLabs"
+    owner: Kevin
+    sprints_complete: 12
+    total_cx: 679
+    scene_types: 25
+    phase1_complete: true  # Sprint 11: voice-first pipeline inversion
+    phase2_complete: true  # Sprint 12: diagnostic feedback loop
+    phase3_in_review: true  # Sprint 13: instructional content pipeline (PR #20)
+    s11_shipped:
+      - "AudioConfig model with 4 modes (none, tts, file, script)"
+      - "resolve_durations(): TTS synthesize per-scene, file mode probe"
+      - "Duration floors (12 fixed, 13 content-aware)"
+      - "Cue manifest support for file mode"
+      - "Script mode pacing guide"
+      - "Deterministic seed passthrough"
+      - "Per-scene voice_settings via extended TTSProvider interface"
+    s12_shipped:
+      - "diagnose_spec() pure function: 6 typed diagnostic signals"
+      - "Visual complexity model per scene type"
+      - "Actionable fix suggestions on every diagnostic"
+      - "iris storyboard --diagnostics (JSON output, exit 0/1)"
+      - "iris storyboard --with-audio (resolve durations before diagnosis)"
+      - "spec-diagnostics skill on AgentCard"
+      - "CLI split: _cli_render.py, _scene_checks.py extracted"
+      - "Cross-registry coverage test (complexity vs duration_floors)"
+    operational_hardening:
+      - "TTS temp dir cleanup in pipeline entry points"
+      - "ffprobe timeout=30"
+      - "Duration sum assertion guard"
+      - "Entry point error wrapping"
+    s13_in_review:
+      - "instruct/ package: extractors (cli, code, skill), query, narration, scene mapping, spec emitter, iterate"
+      - "iris instruct CLI command: topic + codebase -> content spec -> render"
+      - "Diagnostic iteration loop: auto-fix RUSHED_VISUAL, EMPTY_VISUAL, MISSING_NARRATION"
+      - "instruct skill added to AgentCard"
+      - "_scene_counters.py shared between diagnostics and instruct"
+    next: "Phase 3b: produce 4 real videos for YouTube. Phase 3 unblocks iris instruct automation."
+
+  agentlounge.ai:
+    shortcode: LOUNGE
+    latest_sprint: S1
+    sprint_status: complete
+    sprint_theme: "Agent Directory + Standup Portal"
+    tests: 318
+    branch: main
+    stack: "Next.js 16, React Three Fiber, TypeScript, Tailwind CSS v4"
+    navigator_dispatched: true  # 2026-03-27 — first E2E spawn test
+    mb1_4_done: true  # briefing panel
+    heimdall_presence: true  # platform sentinel on Lounge
+    toroidal_heptagram: true  # 2026-03-30 — sacred geometry layout shipped
+    latest_update: "Toroidal Heptagram layout — 7 directional pairs, {7/2}+{7/3} star patterns, binary star center, Fibonacci spiral"
+    next: "Observation backlog — autonomous sprint monitoring gaps from engage test"
+
+  bpsai-computer:
+    shortcode: COMP
+    latest_sprint: CD2
+    sprint_status: complete
+    sprint_theme: "Session Streaming + Resume"
+    tests: 92
+    branch: main
+    stack: "Python 3.11+, httpx, PyYAML"
+    created: "2026-03-30 (Mike)"
+    description: "Computer₀ dispatch daemon. Bridges Command Center (cloud) to local Claude Code execution."
+    cd1_complete: true  # daemon scaffold, A2A polling, dispatch execution, integration tests
+    cd2_complete: true  # stdout streaming, session lifecycle messages, resume command
+    cd2_shipped:
+      - "CD2.1: Stream stdout incrementally with batched A2A posting"
+      - "CD2.2: Session lifecycle messages (started, complete, failed)"
+      - "CD2.3: Resume command handler (claude --resume session_id)"
+    next: "CD3 planning"
+
+  bpsai-agents:
+    shortcode: AF
+    latest_sprint: AF1
+    sprint_status: complete
+    sprint_theme: "Agent Foundry — extract core abstractions (Azure SDK pattern)"
+    tests: 90
+    branch: main
+    stack: "Python 3.11+, pytest"
+    created: "2026-03-30 (Mike)"
+    description: "Monorepo workspace for agent packages: agent-core, agent-lounge, agent-enforce."
+    packages:
+      agent-core: "v0.2.0 -- BaseAgent, Observation, Transport, FileTransport, emit()/aemit(), QualityProfile, AgentCard, LoopRunner"
+      agent-lounge: "placeholder -- AF2"
+      agent-enforce: "placeholder -- AF2"
+    tests: 133
+    af1_complete: true
+    pre_af2_complete: true  # Observation protocol mini-sprint via Engage (6/6 tasks)
+    pre_af2_shipped: "Observation type, Transport/AsyncTransport protocols, FileTransport, emit()/aemit() on BaseAgent"
+    next: "AF2 -- multi-plan + Vaivora (IT Ops) + A2ATransport"
+
+  bpsai-amunet:
+    shortcode: AMU
+    latest_sprint: AMU-S4
+    sprint_status: complete
+    sprint_theme: "Full workspace validation"
+    tests: 704
+    branch: main
+    stack: "Python 3.11+, ast module, tree-sitter, mermaid"
+    created: "2026-03-31"
+    description: "Amunet -- documentation intelligence agent. Reads codebases via AST, generates architecture docs, validates staleness, produces Lounge visualization JSON."
+    mythology: "Egyptian goddess 'the hidden one' -- reveals the invisible"
+    owner: Kevin
+    s3_shipped:
+      - "Package-scoped diagram generation"
+      - "Summary mode for architecture docs"
+      - "Ruff lint/format hardening"
+    s4_shipped:
+      - "Full workspace scan: 3,839 modules, 8,233 classes, 7,520 functions across 13 repos"
+      - "TS scanner integration fix: workspace scanner now calls both Python + TypeScript scanners"
+      - "Architecture docs for 10 Python repos"
+      - "Contract docs for 5 core repos (signatures verified)"
+      - "Summary docs for all 13 repos (markdown + JSON, machine-readable)"
+      - "Staleness validation: 279 LOW issues, 0 HIGH/MEDIUM"
+      - "Cross-repo workspace report with fleet integration assessment"
+      - "Test module layer exclusion fix"
+      - "Dependency diagrams for 10 repos (package-aggregated for large repos)"
+    next: "Phase 3b equivalent: produce real documentation deliverables. Lounge codebase panel (LG-CP) consumes Amunet output."
+
+  bpsai-command-center:
+    shortcode: CC
+    latest_sprint: CC-S3
+    sprint_status: complete
+    sprint_theme: "Real-time agent fleet operations interface"
+    tests: 0
+    branch: main
+    stack: "Next.js 16, React 19, TypeScript, Tailwind CSS v4, Docker"
+    created: "2026-03-30 (Mike)"
+    description: "Command Center web UI. Progressive build: web → tablet → stations → Vision Pro."
+    deployment: "Docker multi-stage for Azure Container Apps"
+    cc_s1_s2_s3_complete: true  # 9/9 tasks done
+    cc_s4_planned: "Auth identity, chat persistence, session monitoring"
+    sprints_planned:
+      CC-S1: "55cx — scaffolding + A2A backend + panel layout (IN PROGRESS)"
+      CC-S2: "45cx — activity feed + status grid + standup"
+      CC-S3: "35cx — Computer conversation + notifications"
+    total_budget: 155cx
+    next: "CC-S1 remaining — A2A backend wiring"
+
+  bpsai-brightdata-demo:
+    shortcode: BD
+    latest_sprint: BD-S1
+    sprint_status: complete
+    sprint_theme: "Autonomous Pipeline Resilience Demo"
+    tests: 53
+    branch: main
+    stack: "Python 3.11+, httpx"
+    created: "2026-03-30"
+    description: "Bright Data scraping pipeline with autonomous detect/triage/fix/QC loop. Demo for Rafael Levi (Bright Data partnership)."
+    bd_s1_shipped:
+      - "Scraper (Bright Data Datasets API v3, exponential backoff)"
+      - "Validator (schema validation, quality thresholds)"
+      - "Store (timestamped JSON with metadata)"
+      - "Monitor (quality signals, incident emission)"
+      - "Andon cord (halt/resume pipeline)"
+      - "Triage classifier (selector_rot, auth_expired, rate_limited, schema_drift)"
+      - "Orchestrator (full autonomous loop, injectable fix_fn, 3 retries)"
+      - "Morning report (markdown timeline + CLI)"
+    design_decisions_resolved: 5  # fixture strategy, dataset ID, standalone orchestrator, injectable fix, internal QC
+    next: "BD-S2 — video demo materials for Rafael, Computer₀ integration (when available)"
+
+  aurora:
+    shortcode: AUR
+    status: deferred
+    reason: "Cliq-first strategy identified but not started. Full transcription blocked on distribution."
+
+# Patent status
+patent:
+  attorney_meeting: TBD
+  candidates:
+    - id: 1
+      name: "Deterministic Enforcement Pipeline"
+      status: production
+      evidence: "1,684 FW + 11,308 CLI tests"
+    - id: 2
+      name: "Agent Lounge / Epistemic Exchange"
+      status: design_plus_partial
+      evidence: "Signal Store (FW-S8), Decision Journal (FW-S8), Computer loop (FW-S9), Sense+Learn hooks (G2.7)"
+    - id: 3
+      name: "Telemetry-Based Skill Discovery"
+      status: mvp_complete
+      evidence: "Intent detection (CLI-S37), session recording (CLI-S39), SQLite (CLI-S40), IntelligentSkillRecommender (G1.4), signal mappers (G1.2), gate integration (G1.5), skill recommend command (G1.6)"
+      blocker: null
+    - id: 4
+      name: "Agent Lounge as Platform"
+      status: design_plus_lineage
+      evidence: "PairCoder Bot proto-Lounge behavior, Metis cognitive loop, coordination channels (G2.8), session briefings"
+
+# Sprint G2 completion summary
+g2_summary:
+  status: "COMPLETE — all repos merged"
+  total_cx: 465
+  shipped_cx: 465
+  tasks_done: 12  # G2.D1-D3, G2.1-G2.9, G2.7, G2.8
+  highlights:
+    - "A6 dynamic enforcement thresholds (80cx)"
+    - "A7 fail-closed gate with timeout + signal emission (20cx)"
+    - "Coordination channels MCP plugin (60cx)"
+    - "RemoteQueryClient for cross-project queries (60cx)"
+    - "Computer Sense + Learn — 9 PhaseHook implementations (100cx)"
+    - "Metis Phase 2 — coordination channels push (30cx)"
+    - "Context freshness auto-refresh (25cx)"
+    - "SD Phase 4 config + hooks (45cx)"
+  known_gaps:
+    - "SHIPPED: Metis hypothesis persistence (Bot-S34 T34.1)"
+    - "SHIPPED: cognitive standup command (Bot-S34 T34.2)"
+
+# Sprint G3 completion summary
+g3_summary:
+  status: "COMPLETE — Tier 3 autonomous action fully shipped"
+  phases_done: [G3.P1, G3.P2, G3.P3]
+  highlights:
+    - "G3.P1: Dispatch abstraction — engine/dispatch/ package (config, classifier, dispatcher)"
+    - "G3.P2: Sprint planner — PlanningContext, SprintBacklog, backlog render/deliver/parse pipeline"
+    - "G3.P3: Navigator dispatch orchestrator — plan_and_propose, dispatch, monitor, review with human gate"
+    - "256 new tests (1,308 → 1,564 framework tests)"
+    - "Tier 3 (Autonomous Action) now COMPLETE"
+  also_shipped:
+    - "v2.18.2 released (3 releases on 2026-03-29: v2.18.0, v2.18.1, v2.18.2)"
+    - "Heimdall platform sentinel (upgrade + Lounge presence)"
+    - "TH sprint complete (evidence dedup, confidence ceiling, tooling registry, intent-to-telemetry, signal source, sense/learn telemetry)"
+    - "Metis session briefing shipped (generator, channel push, persistence, heartbeat wiring)"
+    - "Lounge briefing panel (MB1.4)"
+    - "Computer Sense briefing reader (MB1.5)"
+    - "Budget gate bug fixed (missing blocked key)"
+    - "Hypothesis scoring audit (14 hypotheses, confidence ceiling enforced, Metis heartbeat restarted)"
+    - "bpsai-iris created + S1 complete (Kevin), S2 in progress"
+    - "Editable installs for framework, bot, API repos"
+
+# Mike's design decisions (2026-03-29)
+design_decisions:
+  date: "2026-03-29"
+  resolved: 22
+  deferred: 4
+  docs:
+    - "docs/design/agent-foundry.md — 7 decisions (D-023, D-027, D-028)"
+    - "docs/design/agent-intelligence-scoring-design.md — 9 decisions (D-025, D-026, D-031, D-032)"
+    - "docs/design/command-center-vision.md — 1 decision (D-030)"
+    - "docs/design/the-bridge.md — 5 decisions, 2 deferred (D-029)"
+  key_outcomes:
+    - "First foundry agent: IT Operations (Vaivora) — feeds into Heimdall->Computer->Vaivora chain"
+    - "Layered packages: bpsai-agent-core / bpsai-agent-lounge / bpsai-agent-enforce"
+    - "Bridge: separate ships per operator, shared universe via A2A"
+    - "Command Center: progressive build (web -> tablet -> stations -> Vision Pro)"
+    - "Lounge intelligence deploys in A2A, extract later (transport/intelligence separation)"
+
+# Test counts (2026-04-07 afternoon)
+test_summary:
+  cli: 12500+
+  framework: 1708
+  bot: 2961  # after Metis fixes
+  iris: 3600+  # S13 adds ~190 tests
+  lounge: 318
+  a2a: 200+
+  agents: 133
+  brightdata_demo: 53
+  computer: 144
+  amunet: 704
+  command_center: 200+
+  support: 1651
+  total: 24200+
+
+# Deferred work — tracked items not yet scheduled
+deferred_work:
+  - id: a2a-phase4-hardening
+    description: "A2A Phase 4 hardening — tenant isolation, all 7 skills wired, container hardening, auth logging"
+    source: A2A state.md
+    depends_on: [a2a-cutover]
+    target: A2A-S2+
+
+  - id: content-safety-phase2
+    description: "Content safety Phase 2 — session log ingestion for distillation"
+    source: API deferred
+    depends_on: [QS-3 data flowing]
+    target: API-S44+
+
+  - id: bot-promptbuilder-adoption
+    description: "Bot PromptBuilder adoption — blocked on async/sync impedance"
+    source: Bot S33 deferred
+    depends_on: []
+    note: "SyncProviderAdapter exists in framework (FW-S5). Bot needs to adopt it."
+    target: Bot-S33+
+
+  - id: bot-structural-enforcement
+    description: "Bot structural enforcement — limited_structures not consumed by bot"
+    source: Bot S33 deferred
+    depends_on: []
+    note: "Framework feature gap — bot generates structures but doesn't validate against limits"
+    target: Bot-S33+
+
+  - id: bot-reception-informed-engagement
+    description: "Bot reception-informed engagement — use reception data for targeting"
+    source: Bot S33 deferred
+    depends_on: []
+    target: Bot-S34+
+
+  - id: cli-doctor-command
+    description: "bpsai-pair doctor command — holistic health check"
+    source: CLI backlog.md
+    depends_on: []
+    target: CLI-S44+
+
+  - id: cli-json-output
+    description: "--json output on all commands — enable scripting and machine consumption"
+    source: CLI backlog.md
+    depends_on: []
+    target: CLI-S44+
+
+  - id: cli-task-completed-hook-bridge
+    description: "TaskCompleted hook bridge — high UX impact, needs design (~100cx)"
+    source: CLI backlog.md
+    depends_on: []
+    target: CLI-S44+
+
+  # STARTED: workspace-command-center — now bpsai-command-center repo (Mike, 2026-03-30). CC-S1/S2/S3 planned (155cx).
+
+  # SHIPPED: context-freshness-auto-refresh (G2.9), metis-hypothesis-persistence (Bot-S34), cognitive-standup-command (Bot-S34)
+
+  - id: agent-mythology-renaming
+    description: "Rename agent .md files across all repos to mythology names (reviewer->Nayru, security->Bellona, security-auditor->Laverna, qc->Divona). Update all references."
+    source: "docs/agent-mythology-naming.md, agentlounge.ai"
+    depends_on: []
+    note: "Naming doc exists, Lounge uses mythology names, but .claude/agents/ files still use generic names. Cross-repo change. Deferred to feature branch — needs full lifecycle testing."
+    target: next
+
+  - id: metis-heartbeat-systemd-wiring
+    description: "systemd metis-tick.service calls old Moltbook heartbeat, not MetisHeartbeat. Doc health reports and metis-observations.md never written to framework."
+    source: "G3 audit (2026-03-27)"
+    depends_on: []
+    note: "MetisHeartbeat.write_doc_health and write_observations exist but are never called from systemd. Timer calls src.main heartbeat (Moltbook) instead of MetisHeartbeat."
+    target: immediate
+
+  - id: metis-a2a-transport
+    description: "WorkspaceReader reads from local filesystem only. Needs A2A transport mode for multi-user telemetry (Mike, team members)."
+    source: "G3 audit (2026-03-27)"
+    depends_on: [A2A-S2 deployed]
+    note: "Without this, Metis only sees David's machine. Mike's sessions invisible."
+    target: G3 remaining
+
+  # STARTED: vaivora-it-operations — bpsai-agents repo created (Mike, 2026-03-30). agent-core extracting tick/enforcement/LLM abstractions (AF1 sprint).
+
+  # SHIPPED: cli-telemetry-aggregate — v2.19.1 (2026-03-30). Workspace-level collection, garbage filtering, active time estimation.
+
+  - id: lounge-observation-backlog
+    description: "Autonomous sprint monitoring gaps found during engage test (driver clobbering, no commits, lifecycle skipped)."
+    source: "Engage pipeline test (2026-03-28)"
+    depends_on: []
+    target: next
+
+# Cross-repo blockers
+blockers:
+  # a2a-cutover: RESOLVED 2026-03-27 — a2a.paircoder.ai deployed, TLS bound, health check passing. Consumer cutover next (1+ week stable).
+  # bot-pr3-fixes: RESOLVED 2026-03-27 — P1 fixes applied, PR merged
+  # dynamic-arch: RESOLVED — G2.D1/D2 specs delivered, G2.1/G2.2 implemented

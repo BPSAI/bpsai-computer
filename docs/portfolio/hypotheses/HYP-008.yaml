@@ -1,0 +1,89 @@
+id: HYP-008
+title: Customer-facing systems lack agent intermediaries for observability
+observed: 2026-03-26
+status: actionable
+last_reviewed: '2026-04-07'
+review_after: Bonadea (support triage agent) operational AND website health agent
+  deployed
+source: Metis pattern detector -- originally flagged 2026-03-26
+pattern: "Reframed 2026-03-31: The original hypothesis was \"zero signals from support\
+  \ repos.\"\nThe corrected framing: support repos are infrastructure, not telemetry\
+  \ sources.\nAgents observe systems, Metis observes agents. Metis should never read\
+  \ raw\ninfrastructure signals. She reads what agents report about infrastructure.\n\
+  \nTwo systems lack agent intermediaries:\n(1) paircoder.ai website -- no health\
+  \ agent watching uptime, errors, analytics.\n(2) bpsai-support SDK -- Bonadea (support\
+  \ triage agent) is the intended\n    intermediary. She processes tickets and emits\
+  \ structured observations.\n    The support repos themselves should NOT appear in\
+  \ blind spot detection.\n\nThe fix is NOT \"add telemetry to support repos.\" The\
+  \ fix is \"deploy Bonadea\nand a website health agent, then Metis reads their output\
+  \ via A2A.\"\n"
+sub_hypotheses:
+- 'paircoder.ai website: needs a health agent (uptime, error rate, analytics)'
+- 'bpsai-support: Bonadea is the agent intermediary, not the repos themselves'
+instrumentation_needed: "1. Deploy Bonadea as the support triage agent. She reads\
+  \ support tickets,\n   emits structured signals (ticket volume, resolution time,\
+  \ escalation rate)\n   to A2A. Metis reads Bonadea's signals, not raw support data.\n\
+  2. Deploy a website health agent (could be Heimdall extension or standalone).\n\
+  \   Emits uptime, error rate, page load metrics to A2A.\n3. Remove bpsai-support\
+  \ from Metis blind spot detection. It is not a\n   telemetry source. It is infrastructure\
+  \ that Bonadea observes.\n4. Remove agentlounge.ai from blind spot detection until\
+  \ a Lounge health\n   agent is deployed.\n"
+signal_architecture: 'Pattern: agents observe systems, Metis observes agents.
+
+
+  WRONG:  Metis -> raw support repo signals
+
+  RIGHT:  Metis -> Bonadea (A2A) -> support infrastructure
+
+
+  WRONG:  Metis -> website uptime check
+
+  RIGHT:  Metis -> HealthAgent (A2A) -> paircoder.ai
+
+
+  Metis should ONLY read from A2A agent signals, never from raw infrastructure.
+
+  '
+threshold: Bonadea operational with signals flowing via A2A, OR website health agent
+  deployed with signals flowing via A2A
+confidence: 1.0
+evidence_count: 161
+evidence_reinflation_note: 'Evidence re-inflated from 6 to 71 via Metis cycle repetition
+  (2026-03-27 to
+
+  2026-03-30). Reset to 6. Dedup guard shipped 2026-03-30. Re-inflated to 21
+
+  before dedup took effect. The blind spot is real but the detector keeps
+
+  finding the same observation. With the architectural reframing, the detector
+
+  should be updated to stop flagging support repos as blind spots.
+
+  '
+scoring_audit: '2026-03-31 audit: Reframed hypothesis. Original "zero signals" was
+  correct
+
+  but misattributed. Support repos are not signal sources. Bonadea is.
+
+  Confidence 0.8 reflects the architectural clarity but no agent deployed yet.
+
+  '
+status_history:
+- from: observed
+  to: actionable
+  date: '2026-03-27'
+  reason: Confidence 0.70 >= 0.70 with 6 evidence items (original, pre-inflation)
+- from: actionable
+  to: actionable
+  date: '2026-03-31'
+  reason: Reframed -- agents observe systems, Metis observes agents
+evidence_sources:
+- type: signals
+  field: signal count per project
+  exists: true
+  location: signals.jsonl per repo
+- type: blind_spot_detector
+  field: zero-signal projects
+  exists: true
+  location: PatternDetector._detect_blind_spots
+  note: needs update to exclude infrastructure repos (support, website)

@@ -1,0 +1,68 @@
+id: D-020
+title: "PairCoder Bot becomes Lounge Resident #1 and framework learning layer"
+date: 2026-03-25
+status: decided
+authors: [David, Computer]
+source: Session discussion — bot repurposing after Moltbook ToS change
+
+decision: >
+  PairCoder Bot (paircoder_bot) is repurposed from social media engagement agent
+  to the framework's autonomous reasoning and learning layer. The bot becomes
+  Lounge Resident #1 — the first agent that actively reasons about other agents'
+  reasoning, generates hypotheses, maintains confidence scores, and produces the
+  raw material that feeds skill discovery, dynamic thresholds, and belief propagation.
+
+reasoning: >
+  The bot has 32 sprints of behavioral infrastructure (cognitive loop, belief engine,
+  enforcement pipeline, engagement scoring, A2A push) that maps directly to Lounge
+  participation. Rather than gutting it for twin use (losing 60% of code) or letting
+  it sit paused, repurpose the entire architecture by changing the input source from
+  Reddit to agent reasoning traces. The engagement infrastructure was never about
+  Reddit — it was about reasoning over observed patterns and acting on them.
+
+what_changes:
+  distribution_target: "Reddit API → Lounge exchange protocol / framework hypothesis files"
+  content_source: "Subreddit feeds → agent reasoning traces, telemetry, session outcomes"
+  engagement_targets: "Reddit comments → peer agent beliefs, hypothesis confidence"
+  reception_signals: "Upvotes/comments → belief adoption rates, hypothesis validation"
+
+what_stays:
+  - "Cognitive loop (sense → reason → act → reflect)"
+  - "Enforcement pipeline (L1-L5)"
+  - "Belief engine with confidence decay"
+  - "Mood state machine (becomes organizational health indicator)"
+  - "Voice profile consumption"
+  - "A2A push/pull"
+
+phases:
+  1:
+    name: "Listen and reason (no infrastructure needed)"
+    description: >
+      Bot reads telemetry, hypotheses, and session outcomes across repos via file access.
+      Think cycle processes new data. Reflect cycle updates hypothesis confidence.
+      Heartbeat pushes updated hypotheses to framework.
+    depends_on: []
+  2:
+    name: "Real-time observation (CLI-S43 channels)"
+    description: >
+      Bot receives push events from agent sessions. Think cycle processes live
+      reasoning traces. Latency drops from reflect-cycle to think-cycle.
+    depends_on: [CLI-S43 coordination channels]
+  3:
+    name: "Active Lounge participation"
+    description: >
+      Bot participates in epistemic exchange — challenging, proposing alternatives,
+      evaluating peer reasoning. Comment categorizer applied to agent reasoning.
+    depends_on: [Agent Lounge protocol, QS-4b belief propagation]
+
+implications:
+  - "Bot produces raw material for IntelligentSkillRecommender (Skill Discovery MVP)"
+  - "Bot maintains hypothesis confidence scores autonomously (replaces manual review)"
+  - "Bot's organizational health indicator feeds dynamic thresholds (A6)"
+  - "Bot is the test subject for HYP-005 (cross-session belief divergence)"
+  - "Bot proves the Lounge works at agent level before enterprise deployment"
+  - "Phase 1 can start immediately — no infrastructure dependency"
+
+related: [D-017, D-013, D-008]
+portfolio_items: [38, 34, 29]
+supersedes: "Bot-S33 (next cognitive loop iteration) — now Lounge Resident Phase 1"

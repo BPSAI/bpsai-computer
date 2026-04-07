@@ -1,0 +1,59 @@
+id: D-025
+title: "A2A database: shared server with separate databases, defined migration path"
+date: 2026-03-27
+status: decided
+authors: [Mike Busch, Claude]
+context: "A2A-S2 production deployment planning — database provisioning strategy"
+
+trigger: >
+  bpsai-a2a needs a PostgreSQL database for production. The existing paircoder_api
+  already runs on Azure Database for PostgreSQL. Question: share the server or
+  provision a separate one?
+
+options:
+  a: "Shared PostgreSQL server, shared database (different schemas)"
+  b: "Shared PostgreSQL server, separate databases"
+  c: "Separate PostgreSQL server from day one"
+
+decision: b
+
+rationale: >
+  Separate databases on the same server gives logical isolation (own Alembic history,
+  own tables, zero overlap) while sharing compute cost. At current scale (2 users,
+  low traffic), a second server adds ~$13-50/month operational cost with no practical
+  benefit. Option (a) rejected because schema-level isolation is fragile — migration
+  coupling and credential scope are risks. Option (c) is the right long-term answer
+  but premature now.
+
+  The question is not IF separate servers will be needed, but WHEN. The migration
+  path must be defined now so the split is mechanical when the trigger fires.
+
+migration_path:
+  current_state: "Shared server, separate databases (bpsai_api + bpsai_a2a)"
+  triggers:
+    - "A2A query latency affecting API response times (resource contention)"
+    - "A2A traffic volume requiring a different DB tier"
+    - "Security audit requiring physical isolation (enterprise customer requirement)"
+    - "Migration downtime in one service is unacceptable for the other"
+  steps:
+    - "Provision new Azure Database for PostgreSQL (pg-bpsai-a2a-cus-prod)"
+    - "pg_dump bpsai_a2a | psql to new server (or Azure migration tooling)"
+    - "Update A2A Container App env: DATABASE_URL -> new host"
+    - "Update Key Vault firewall on new server with A2A outbound IPs"
+    - "Verify, then drop bpsai_a2a database from old server"
+  why_clean: >
+    Because databases are separate from day one, the migration is a straightforward
+    dump/restore. No table untangling, no schema surgery, no data separation. The
+    connection string is the only thing that changes. Application code, Alembic
+    history, and migrations stay identical.
+
+constraints:
+  - "A2A connection string MUST reference database name bpsai_a2a (not the API database)"
+  - "Each service runs its own Alembic migration independently"
+  - "No cross-database queries or foreign keys between API and A2A"
+  - "Key Vault firewall rules must include A2A Container App outbound IPs"
+
+relates_to:
+  - "A2A-S2 production deployment (status.yaml blocker: a2a-cutover)"
+  - "D-017 (A2A gets its own repo)"
+  - "docs/portfolio/status.yaml deferred_work: a2a-phase4-hardening"

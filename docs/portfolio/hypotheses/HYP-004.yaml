@@ -1,0 +1,58 @@
+id: HYP-004
+title: Multi-agent TDD signature drift
+observed: 2026-03-10
+status: actionable
+last_reviewed: '2026-04-07'
+review_after: 2 more sprints with multi-agent worktree execution
+pattern: 'Multi-agent TDD breaks when test author != implementer. In worktree-isolated
+  parallel execution, tests are written against imagined APIs because the implementation
+  doesn''t exist yet. 5 signature mismatches in Sprint 37.
+
+  '
+options:
+  a: "Interface stubs committed before driver dispatch \u2014 typed signatures with\
+    \ NotImplementedError"
+  b: Contract section in backlog items specifying exact function signatures, parameters,
+    return types
+  c: "Accept rework as cost of parallelism \u2014 no action if drift rate <2 tests/sprint"
+current_signal: '5 mismatches in one sprint (Sprint 37). Single data point but each
+  required debug + rewrite. High rework cost relative to prevention cost.
+
+  '
+instrumentation_needed: 'Track: test failures per sprint categorized by cause (signature
+  mismatch vs logic error vs environment). Available after QS-2a.
+
+  '
+threshold: '>2 signature mismatches per sprint'
+confidence: 1.0
+evidence_count: 38
+evidence_reinflation_note: Evidence re-inflated from ~5 real mismatches to 57 via
+  Metis cycle repetition. Reset to 5 (the actual Sprint 37 mismatches). Still actionable
+  on the single sprint, but own review criteria requires 2 more sprints.
+scoring_audit: "2026-03-29 audit: Real signal (5 mismatches Sprint 37) but single\
+  \ data point. Own review criteria says '2 more sprints with multi-agent worktree\
+  \ execution' \u2014 not done. Evidence count 45 is cycle repetition. Confidence\
+  \ reset from 1.0."
+status_history:
+- from: observed
+  to: actionable
+  date: '2026-03-27'
+  reason: Confidence 0.70 >= 0.70 with 9 evidence items
+- from: observed
+  to: actionable
+  date: '2026-03-30'
+  reason: Confidence 0.79 >= 0.70 with 57 unique evidence items
+evidence_sources:
+- type: git
+  field: test file modification order vs implementation
+  exists: true
+  location: GitEvidenceMapper via TH2.3 _EXISTING_TOOLING update
+- type: pr_review
+  field: TDD-related P1/P2 findings
+  exists: true
+  location: ReviewEvidenceMapper via TH2.3 _EXISTING_TOOLING update
+evidence_hashes:
+- 8627163e39c260aa
+- a082af315489d935
+- a7e9647f2ed277e1
+- bdb7f4008c511ffb

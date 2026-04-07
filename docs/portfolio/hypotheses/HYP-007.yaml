@@ -1,0 +1,82 @@
+id: HYP-007
+title: Agent-native VSM is an enterprise product feature
+observed: 2026-03-26
+status: actionable
+last_reviewed: '2026-04-02'
+review_after: First enterprise prospect conversation OR L3 orchestration demo
+pattern: "Enterprise development teams running agent-driven projects at scale lose\
+  \ intuitive visibility into their value stream. When agents execute sprints, review\
+  \ PRs, dispatch tasks, and coordinate cross-repo \u2014 the handoffs become agent-to-agent,\
+  \ and no human sees the queue. Traditional VSM tools assume human-driven workflows.\
+  \ Agent-native VSM that surfaces flow metrics from enforcement gates, telemetry,\
+  \ and orchestration events is a product category that doesn't exist yet.\n"
+product_angle: "The BPS AI platform already generates the underlying data at L3: enforcement\
+  \ gates emit structured events, QS telemetry records session outcomes, A2A queries\
+  \ expose cross-project state, Computer loop tracks plan/dispatch/review cycles.\
+  \ Assembling this into a value stream view (lead time, wait time, bottleneck identification,\
+  \ flow efficiency) per project and across a fleet is a natural extension of the\
+  \ Enterprise tier \u2014 not a new system, but a new lens on existing telemetry.\n"
+options:
+  a: 'Enterprise dashboard: VSM view built on QS-4 push telemetry + fleet aggregation'
+  b: 'Computer self-report: each Computer instance reports its own value stream metrics
+    as part of Learn phase'
+  c: 'A2A queryable VSM: expose flow metrics as A2A skill endpoints, consumable by
+    customer tooling'
+  d: 'Observation-mode entry point: deploy framework read-only, map existing workflow,
+    produce VSM report as sales artifact'
+current_signal: 'No direct customer signal. Hypothesis derived from portfolio review:
+  the internal system doesn''t need VSM at current scale, but the architecture produces
+  all the data an enterprise customer would need for agent-native VSM. Option (d)
+  aligns with the existing "observation-only deployment" product concept in strategy.md.
+
+  '
+differentiation: "No existing VSM tooling is designed for agent-driven flows. Traditional\
+  \ VSM tools (Plutora, Tasktop, Azure DevOps analytics) assume human actors, human-scale\
+  \ timelines, and ticket-based handoffs. Agent-to-agent value streams have fundamentally\
+  \ different characteristics: sub-minute cycle times, programmatic handoffs, parallel\
+  \ execution, and bottlenecks that are invisible at human timescales but compound\
+  \ at volume. The first platform that instruments agent-native value streams with\
+  \ properly normalized metrics owns an emerging category. The BPS AI stack is uniquely\
+  \ positioned because the enforcement gates, telemetry pipeline, and orchestration\
+  \ loop already generate the raw data \u2014 the product is the lens, not the plumbing.\n"
+connection_to_existing:
+- "Observation-only deployment (strategy.md) \u2014 VSM report is a natural output"
+- "Enterprise tier fleet telemetry (strategy.md pricing) \u2014 VSM is a visualization\
+  \ layer"
+- "Computer Sense+Learn (FW-S11/S12) \u2014 self-reporting value stream is part of\
+  \ the loop"
+- "HYP-006 \u2014 internal inflection triggers validate the enterprise use case"
+metric_scaling: "Agent-driven value streams operate at timescales orders of magnitude\
+  \ smaller than human-driven ones. Traditional VSM tools report in hours/days; agent\
+  \ flows complete in seconds/minutes. This creates two challenges: (1) Threshold\
+  \ design \u2014 absolute thresholds will either miss agent bottlenecks or false-positive\
+  \ on human stages. Metrics must normalize to the flow speed of each stage. A ratio-based\
+  \ or baseline-relative approach (% of stage's own expected duration) may be necessary.\
+  \ (2) Signal interpretation \u2014 customers accustomed to human-scale metrics may\
+  \ dismiss agent bottlenecks as trivial. The product must frame agent-scale inefficiencies\
+  \ in terms of their compounding impact at volume (e.g., \"30 seconds per handoff\
+  \ x 500 daily agent cycles = 4 hours of invisible queue time\").\n"
+instrumentation_needed: 'None until L3 orchestration is running (FW-S11+). The product
+  concept depends on Computer loop + QS-4 telemetry generating real flow data. Validate
+  with first enterprise prospect conversation.
+
+  '
+threshold: Enterprise prospect identifies flow visibility as a pain point, OR observation-mode
+  deployment produces a VSM report that surprises the customer
+confidence: 0.7227999999999998
+evidence_count: 72
+scoring_audit: '2026-03-29 audit: Zero customer signal. File states ''no direct customer
+  signal.'' Pure product speculation derived from portfolio review. No enterprise
+  prospect conversation. No L3 demo. Evidence count 51 is cycle repetition. Confidence
+  reset from 1.0.'
+status_history:
+- from: observed
+  to: actionable
+  date: '2026-03-27'
+  reason: Confidence 0.78 >= 0.70 with 21 evidence items
+- from: observed
+  to: actionable
+  date: '2026-04-02'
+  reason: Confidence 0.72 >= 0.70 with 72 unique evidence items
+evidence_hashes:
+- d3c856293b69afa4

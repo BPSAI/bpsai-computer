@@ -1,0 +1,68 @@
+id: D-023
+title: "bpsai-computer as standalone intelligence layer package"
+date: 2026-03-26
+status: decided
+authors: [David, Computer]
+source: "Session discussion — engage command UX fix led to package separation conversation. Builds on computer-adaptive-loop-proposal.md (S9 planning, 2026-03-16) and agent-coordination-architecture.md."
+
+decision: >
+  The intelligence layer (Computer₀, Metis, signal pipeline, pattern detection,
+  hypothesis management, idea lifecycle) will be extractable as a standalone
+  pip-installable package: bpsai-computer. This package installs on top of
+  existing infrastructure (dev environments, enterprise codebases) and
+  bootstraps intelligence collection without requiring the full PairCoder CLI.
+
+prior_art: >
+  This was already decided during S9 planning (2026-03-16): "Computer₀ lives in
+  a dedicated bpsai-computer repo, not in the framework. This separation prevents
+  the framework from becoming both library and application." (computer-adaptive-loop-proposal.md)
+  The three-layer package model was established: bpsai-framework (library),
+  bpsai-pair (CLI toolkit), bpsai-computer (workspace orchestrator). D-023 extends
+  this with the "install on existing infrastructure" angle — Computer as a product
+  entry point for mature organizations, not just an internal evolution.
+
+rationale: >
+  Navigator evolves into Computer out of necessity within PairCoder — but mature
+  organizations with large existing codebases don't need PairCoder's full CLI
+  (task management, planning, enforcement) to benefit from the intelligence layer.
+  bpsai-computer spawns Metis, starts collecting signal, and progressively
+  discovers where and how to dispatch agents via the A2A pipeline. The recursive
+  dispatch model (Computer₀ dispatches Computer₁ the same way Computer₁ dispatches
+  Drivers) means the mechanism is the same at every level — build it once.
+  Computer₀ dispatches `bpsai-pair engage` into project directories (per
+  agent-coordination-architecture.md). The coordination channel carries messages
+  at every level.
+
+what_this_means:
+  - The engage command surface must be clean (bpsai-computer engage, not engage engage)
+  - Intelligence modules (pattern_detector, idea_store, relevance_scorer, hypothesis_manager)
+    must not depend on CLI-specific infrastructure (task files, plan files, Trello)
+  - Metis must work standalone with just a workspace path and an LLM endpoint
+  - The A2A pipeline is the dispatch mechanism — Computer discovers agents and routes work
+  - Signal hooks are the observation mechanism — Computer starts by watching, then acts
+
+what_this_does_not_mean:
+  - Not a rewrite — extraction from existing modules
+  - Not immediate — depends on G2 (Sense + Learn) and G3 (coordination channels) completing
+  - Not replacing PairCoder — bpsai-computer is the intelligence substrate, PairCoder is the
+    full developer experience (enforcement, planning, task lifecycle, voice profiles)
+
+package_surface:
+  - "bpsai-computer engage <backlog> — run a sprint autonomously"
+  - "bpsai-computer observe — start Metis observation loop"
+  - "bpsai-computer status — portfolio state query"
+  - "bpsai-computer dispatch <repo> <task> — send a Navigator to a repo"
+
+prerequisites:
+  - G2.7 Computer Sense + Learn (wire Sense to real signal sources)
+  - G2.3 Coordination channels (transport layer for dispatch)
+  - Metis standalone mode (already working — no Moltbook deps)
+  - A2A consumer cutover (agents discoverable via registry)
+
+related: [D-013, D-020, D-022]
+prior_docs:
+  - docs/computer-adaptive-loop-proposal.md (Phase 0.5, bpsai-computer repo)
+  - docs/agent-coordination-architecture.md (recursive dispatch model)
+  - docs/bps-portfolio-plan.md (items 37, 46 — Computer hierarchy, adaptive loop)
+  - docs/patent-briefing.md (Candidate 2 — epistemic exchange, Candidate 4 — platform)
+resolves: []

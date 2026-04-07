@@ -1,0 +1,36 @@
+id: D-015
+title: "Gate hooks in observation mode — data collection before thresholds"
+date: 2026-03-25
+status: decided
+authors: [David, Computer]
+source: CLI anthropic-autonomy-self-review.md (reconciliation item #1)
+
+decision: >
+  Architecture enforcement gate hooks are intentionally deployed in OBSERVATION mode, not
+  enforcement mode. Hardcoded thresholds are premature because file role matters (test files
+  vs service files vs CLI entry points have legitimately different profiles). The path is:
+  observation/data collection first, then dynamic thresholds (A6) informed by collected data.
+
+reasoning: >
+  The autonomy self-review identified that gate hooks appeared to be "not working" but were
+  in fact collecting data as designed. File role context is critical — a test file with 40
+  imports is normal, a service file with 40 imports is a smell. Without sufficient data to
+  distinguish roles and establish per-role baselines, enforcing static thresholds would
+  produce false positives that erode trust in the enforcement system. The dynamic threshold
+  design (A6, CLI-S43) will consume the collected observation data to set context-aware
+  thresholds.
+
+alternatives_rejected:
+  - "Enforce static thresholds immediately — false positives on legitimate patterns (test files, CLI entry points)"
+  - "Skip observation, go straight to dynamic — no baseline data to calibrate against"
+  - "Per-file exemptions — doesn't scale, creates maintenance burden"
+
+implications:
+  - Gate hooks collect metrics but do not block until A6 ships
+  - Architecture exemptions (D-020 pattern) handle known legitimate outliers
+  - A6 dynamic thresholds (CLI-S43) are the resolution — they consume observation data
+  - This is consistent with the enforcement taxonomy: static gates enforce, dynamic thresholds adapt
+
+related: [D-006]
+portfolio_items: []
+enforcement_taxonomy_ref: "A6: Dynamic arch thresholds"

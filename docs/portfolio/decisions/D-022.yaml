@@ -1,0 +1,35 @@
+id: D-022
+title: "Computer must consume PairCoder's planning enforcement — no planning by conversation alone"
+date: 2026-03-26
+status: decided
+authors: [David, Computer]
+source: Session discussion — G1 was planned without calibration data
+
+decision: >
+  Global sprint planning (G-sprints) must go through PairCoder's planning
+  enforcement pipeline, not be authored as markdown files from conversation.
+  The CNS has calibration data (356 records, 13 task types), estimation bias
+  correction, budget validation, and scope detection — and didn't use any of
+  it when planning G1. This violates D-013 (CNS governed by PairCoder).
+
+what_needs_to_exist:
+  - "Global mode for /pc-plan skill — reads workspace yaml, queries calibration per project, validates cross-repo budget"
+  - "bpsai-pair engage for global sprints — dispatches Navigators per repo, monitors, reviews PRs, merges"
+  - "Calibration-informed sizing — use actual token/duration data per task type, not vibes"
+  - "Sprint retrospective auto-capture — feed actual vs estimated back into calibration"
+
+evidence_of_gap: >
+  G1 was sized at ~335cx across 2 repos by reading docs and making judgment
+  calls. CLI calibration shows feature tasks average 93.9K tokens on Opus
+  (37 samples). This data was available but not queried. Per-Navigator
+  capacity is ~300cx without compaction. G1 may be significantly undersized
+  for two Navigator instances.
+
+document_lifecycle: >
+  Every design doc needs a resolves field — list of task/sprint IDs that
+  make the document purgeable when complete. Metis doc health check verifies
+  resolves completion and recommends purging. Index.md becomes the lifecycle
+  tracker. Documents accumulate forever without this mechanism.
+
+implementation_target: "Sprint G1 or G2 — add as tasks"
+related: [D-013, D-020]

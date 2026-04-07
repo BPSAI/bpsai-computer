@@ -1,0 +1,63 @@
+id: D-024
+title: "Dispatch enforcement is stack-dependent, not one-size-fits-all"
+date: 2026-03-27
+status: decided
+authors: [David Wiens, Computer]
+context: "G3 sprint planning — security constraint for Computer dispatching Navigators to repos"
+
+trigger: >
+  First E2E Navigator spawn test dispatched to agentlounge.ai (Next.js project).
+  The sprint plan stated 'All dispatched Navigators MUST run in contained-auto mode.'
+  But contained-auto is a PairCoder CLI command requiring Python + PairCoder installed.
+  Non-Python repos (Lounge, Website, Support frontend) cannot use it.
+
+options:
+  a: "Require PairCoder installed everywhere — add Python dependency to all repos"
+  b: "Two enforcement paths — contained-auto for PairCoder repos, Claude Code native for others"
+  c: "Drop contained-auto, use only Claude Code native enforcement everywhere"
+
+decision: b
+reasoning: >
+  Option (a) forces a Python dependency on Node.js/React projects for no functional benefit.
+  Option (c) throws away the 3-tier containment system (452 lines, battle-tested) that provides
+  stronger guarantees than --allowedTools alone (path-level blocking, network guard, git
+  checkpoints, audit trail). Option (b) uses the best tool for each context — PairCoder's
+  deeper enforcement where available, Claude Code's native mechanisms everywhere else.
+
+enforcement_by_repo_type:
+  paircoder_repos:
+    repos: [paircoder, paircoder_api, paircoder_bot, bpsai-framework]
+    mechanism: "bpsai-pair contained-auto --channels plugin:bpsai-coordination [task]"
+    provides:
+      - "3-tier path enforcement (blocked/read-only/read-write)"
+      - "Network allowlist guard"
+      - "Git checkpoint + rollback"
+      - "Unified audit trail (bypass_log.jsonl)"
+    spec: "paircoder/docs/gates-and-containment.md"
+
+  non_paircoder_repos:
+    repos: [agentlounge.ai, paircoder.ai, bpsai-a2a, bpsai-support]
+    mechanism: "claude -p with --allowedTools + settings.json enforcement"
+    provides:
+      - "--allowedTools restricts tool access on invocation"
+      - "disallowedTools frontmatter in .claude/agents/*.md (per-agent restrictions)"
+      - "permissions.deny in .claude/settings.json (path-level blocking)"
+      - "sandbox failIfUnavailable (CC 2.1.83, OS-level sandboxing)"
+    template: >
+      Every non-PairCoder repo must have .claude/settings.json with permissions.deny
+      blocking .env, credentials.json, secrets.yaml. Agent .md files should declare
+      disallowedTools for any tools not needed by that agent type.
+
+  all_repos:
+    - "CLAUDE_CODE_SUBPROCESS_ENV_SCRUB=1 strips credentials from subprocesses"
+    - ".env and credential paths blocked regardless of mechanism"
+    - "Dispatch without enforcement is a security violation"
+
+implications:
+  - "G3.P1 (dispatch abstraction) must detect repo type and choose enforcement path"
+  - "Non-PairCoder repos need .claude/settings.json with permissions.deny as part of scaffolding"
+  - "PairCoder init (cookie-cutter) already handles PairCoder repos"
+  - "Future: if PairCoder ships as a language-agnostic tool (not Python CLI), this decision collapses to option (c)"
+
+supersedes: null
+related: [D-009, D-015]

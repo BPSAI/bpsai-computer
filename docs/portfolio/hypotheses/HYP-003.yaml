@@ -1,0 +1,49 @@
+id: HYP-003
+title: IDE friction in multi-repo orchestration
+observed: 2026-03-10
+status: actionable
+last_reviewed: '2026-03-31'
+review_after: QS-2a ships + 10 Navigator sessions (5 IDE, 5 terminal)
+pattern: 'IDE (PyCharm) optimized for single-repo coding creates friction during multi-repo
+  orchestration. Navigator sessions waste tokens on IDE context injection (file-open
+  events), can''t run parallel sessions, and lack cross-project visibility.
+
+  '
+options:
+  a: Terminal-only for Navigator sessions (tmux/split panes), IDE for Driver sessions
+    only
+  b: Monorepo workspace in IDE (read-only visibility) + terminal agent sessions
+  c: Branded lightweight TUI that spawns agent terminals, shows cross-repo status
+  d: Full orchestration dashboard consuming A2A queries + MCP events
+current_signal: 'Anecdotal. One session (2026-03-10 audit) showed IDE noise and single-session
+  constraint. One external data point (PowerShell user). No measured token waste yet.
+
+  '
+instrumentation_needed: 'Tag ide_context_tokens vs user_requested_tokens in session
+  recording (QS-2a). Compare session efficiency: IDE-hosted vs terminal-only for Navigator
+  work.
+
+  '
+threshold: '>15% token efficiency gain or >20% faster cross-repo operations'
+confidence: 0.7
+evidence_count: 67
+scoring_audit: '2026-03-29 audit: 1 anecdotal session. ide_context_tokens field does
+  not exist in codebase. No IDE vs terminal comparison data collected. QS-2a not shipped.
+  Evidence count 53 is inflation from repeated Metis cycles. Confidence reset from
+  1.0.'
+status_history:
+- from: observed
+  to: actionable
+  date: '2026-03-27'
+  reason: Confidence 0.78 >= 0.70 with 23 evidence items
+- from: observed
+  to: actionable
+  date: '2026-03-31'
+  reason: Confidence 0.70 >= 0.70 with 67 unique evidence items
+evidence_sources:
+- type: telemetry
+  field: session context by environment
+  exists: false
+  needed: Tag IDE vs terminal in session recording
+evidence_hashes:
+- 46b49af33be0429c

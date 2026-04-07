@@ -1,0 +1,61 @@
+id: HYP-009
+title: A2A inter-service communication has insufficient observability
+observed: 2026-03-26
+status: actionable
+last_reviewed: '2026-04-05'
+review_after: A2A-S2 production deployment OR DNS/infra blocker resolved
+source: "Metis pattern detector \u2014 flagged as 'low visibility' across 6 cycles"
+pattern: "bpsai-a2a has only 1 signal (sprint_status) in workspace telemetry. Metis\
+  \ flagged this as \"low visibility\" in every cycle. A2A handles inter-service authentication\
+  \ and transport \u2014 failures here cascade silently across all consumers. Current\
+  \ blocker: A2A isn't deployed to production yet (DNS/infra), so the low signal count\
+  \ is expected. But once A2A-S2 ships, this needs instrumentation or the same blind\
+  \ spot pattern will persist in production.\n"
+instrumentation_needed: 'After A2A-S2 production deployment: add session outcome signals,
+  health check signals, and auth failure tracking. The A2A repo already has signal
+  hooks wired (G2.D3) but generates no runtime telemetry because it''s not deployed.
+
+  '
+threshold: A2A deployed to production with less than 5 signal types flowing
+confidence: 0.7034
+evidence_count: 8
+evidence_reinflation_note: "Evidence re-inflated from 6 cycles to 80 via Metis repetition.\
+  \ Reset to 6. A2A is now deployed (a2a.paircoder.ai live 2026-03-27) but consumer\
+  \ cutover not yet complete. Signal count will naturally increase once consumers\
+  \ wire in. Status downgraded to observed \u2014 premature to call actionable."
+evidence_notes: 6 Metis cycles flagged. Lower confidence than HYP-008 because low
+  signal count is expected pre-deployment.
+scoring_audit: '2026-03-29 audit: A2A not deployed to production. Low signal count
+  is expected pre-deployment. File itself notes ''lower confidence than HYP-008.''
+  Evidence count 65 is 6 Metis cycles repeating the same finding. Confidence reset
+  from 1.0.'
+status_history:
+- from: observed
+  to: actionable
+  date: '2026-03-27'
+  reason: Confidence 0.81 >= 0.70 with 20 evidence items
+- from: observed
+  to: actionable
+  date: '2026-03-30'
+  reason: Confidence 0.78 >= 0.70 with 80 unique evidence items
+- from: observed
+  to: actionable
+  date: '2026-04-05'
+  reason: Confidence 0.70 >= 0.70 with 8 unique evidence items
+evidence_sources:
+- type: signals
+  field: A2A signal count
+  exists: true
+  location: bpsai-a2a signals.jsonl
+- type: a2a_health
+  field: endpoint health check
+  exists: true
+  location: a2a.paircoder.ai/health
+evidence_hashes:
+- 176daf7305734b26
+- 57adffb388cc9ccc
+- 5f1a959c905991ae
+- 9d68a2d4161ed0b6
+- 9f6f8c7133e86663
+- c796cb13d6adb424
+- e79da0fee1a15b39

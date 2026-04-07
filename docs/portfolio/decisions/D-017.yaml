@@ -1,0 +1,31 @@
+id: D-017
+title: "Engagement-first cognitive loop precedent"
+date: 2026-03-25
+status: decided
+authors: [David, Computer]
+source: Bot S32 state.md (reconciliation item #6)
+
+decision: >
+  The bot's cognitive loop runs baseline engagement behavior every cycle. The LLM only
+  decides between post, reflect, or idle — it does not decide whether to engage at all.
+  Engagement is the default; the LLM modulates intensity, not presence.
+
+reasoning: >
+  Bot S32 proved that making engagement the baseline and using the LLM for modulation
+  (not activation) produces more consistent behavior. The enforcement pipeline ordering
+  matters: baseline behavior runs first, then the LLM refines. This is the same pattern
+  as "the model codes, Python enforces" applied to cognitive loops — Python ensures
+  engagement happens, the model decides how.
+
+alternatives_rejected:
+  - "LLM decides everything including whether to engage — produces inconsistent gaps in activity"
+  - "Fixed schedule with no LLM modulation — too rigid, misses contextual opportunities"
+
+implications:
+  - Framework cognitive loop patterns should follow this precedent: define baseline behavior in code, use LLM for modulation
+  - Enforcement pipeline ordering (baseline first, LLM second) is a design principle, not an implementation detail
+  - Future agents (Aurora, IT Agent) should adopt the same pattern
+  - This validates the six-layer architecture: generation layer modulates, enforcement layer guarantees
+
+related: [D-001, D-006]
+portfolio_items: []

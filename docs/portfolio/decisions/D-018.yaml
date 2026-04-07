@@ -1,0 +1,34 @@
+id: D-018
+title: "A2A service topology — framework, transport, consumers"
+date: 2026-03-25
+status: decided
+authors: [David, Computer]
+source: A2A project.md (reconciliation item #7)
+
+decision: >
+  A2A service topology is three layers:
+  (1) bpsai-framework (pip package) — defines A2A schemas (SkillResult, AgentCard, SkillRegistry)
+  (2) bpsai-a2a (standalone service) — transport layer, JSON-RPC 2.0 server, auth boundary
+  (3) Consumers (CLI, API, Bot) — import schemas from framework, communicate via bpsai-a2a transport
+
+reasoning: >
+  Separating schemas (framework) from transport (bpsai-a2a) from consumers means:
+  schemas are versioned with the framework and available to all consumers via pip,
+  transport is independently deployable and scalable, and consumers don't need to
+  know about each other's transport details. The API previously hosted A2A directly
+  but this created coupling between licensing/telemetry concerns and A2A transport.
+
+alternatives_rejected:
+  - "A2A embedded in API — couples licensing with transport, blocks independent scaling"
+  - "A2A schemas in bpsai-a2a repo — consumers would need to depend on transport package just for types"
+  - "No standalone transport — every consumer implements its own A2A server"
+
+implications:
+  - Framework `a2a/` package is the canonical schema source
+  - bpsai-a2a repo handles deployment, auth, rate limiting, routing
+  - API removal guide (bpsai-a2a/docs/api-removal-guide.md) tracks the migration
+  - Auth boundary uses LicenseClient HTTP validation, no shared DB (1 retry on 5xx, 3s timeout)
+  - DNS blocker: a2a.paircoder.ai setup required before consumer cutover
+
+related: [D-002, D-005, D-010]
+portfolio_items: [1, 2]
