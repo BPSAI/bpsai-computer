@@ -1,5 +1,5 @@
 project_name: bpsai-computer
-version: 2.20.0
+version: 2.21.2
 description: "Computer\u2080 \u2014 workspace orchestrator and dispatch daemon"
 project:
   name: Computer
