@@ -9,7 +9,19 @@
 **Plan:** plan-sprint-3-engage
 **Current Sprint:** CD3 — Daemon JWT + Operator Identity
 
-## What Was Just Done (2026-04-07)
+## What Was Just Done
+
+- **CD3.4 done** (auto-updated by hook) (2026-04-07)
+
+- **CD3.4 COMPLETE** — Auto-discover license_id from license.json (bpsai-computer)
+  - ✓ `config.py`: `license_id` already defaults to None (no change needed)
+  - ✓ New `license_discovery.py`: finds `~/.paircoder/license.json`, reads `payload.license_id`
+  - ✓ `BPSAI_LICENSE_FILE` env var overrides default path
+  - ✓ `daemon.py`: `resolve_license_id()` auto-discovers when config has no `license_id`
+  - ✓ Clear error: "No license found. Run: bpsai-pair license install <file>"
+  - ✓ Config `license_id` overrides auto-discovery (for cloud VMs)
+  - ✓ 9 new license_discovery tests + 3 daemon integration tests (12 total)
+  - ✓ 48/48 tests passing
 
 - **CD3.3 COMPLETE** — Show operator ID in Command Center (bpsai-command-center)
   - ✓ Added `operator?: string` to `JwtClaims` interface in `oauth.ts`
@@ -43,7 +55,7 @@
 
 ## What's Next
 
-1. CD3.4 — CD3.5 (remaining sprint tasks)
+1. CD3.5 (remaining sprint task)
 2. Branch protection setup (BPSAI/paircoder#121)
 
 ```yaml
