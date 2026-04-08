@@ -38,6 +38,7 @@ class A2AClient:
             return {}
         token = await self._token_manager.get_token()
         if token is None:
+            log.warning("TokenManager configured but returned None token — request will lack auth")
             return {}
         return {"Authorization": f"Bearer {token}"}
 
