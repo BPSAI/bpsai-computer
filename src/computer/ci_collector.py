@@ -11,6 +11,7 @@ from typing import TYPE_CHECKING
 import httpx
 
 if TYPE_CHECKING:
+    from computer.auth import TokenManager
     from computer.config import DaemonConfig
 
 log = logging.getLogger(__name__)
@@ -25,12 +26,14 @@ class CISummaryCollector:
         self,
         config: DaemonConfig,
         cursor_path: Path | None = None,
+        token_manager: TokenManager | None = None,
     ) -> None:
         self._config = config
         self._workspace_root = Path(config.workspace_root)
         self._cursor_path = cursor_path or (
             Path.home() / ".bpsai-computer" / "ci_cursors.json"
         )
+        self._token_manager = token_manager
         self._cursors: dict[str, str] = self._load_cursors()
         self._http = httpx.AsyncClient(
             timeout=httpx.Timeout(connect=5.0, read=10.0, write=10.0, pool=10.0),
@@ -54,14 +57,25 @@ class CISummaryCollector:
         self._cursor_path.parent.mkdir(parents=True, exist_ok=True)
         self._cursor_path.write_text(json.dumps(self._cursors, indent=2))
 
+    async def _auth_headers(self) -> dict[str, str]:
+        """Return Authorization header if token_manager is configured and token available."""
+        if self._token_manager is None:
+            return {}
+        token = await self._token_manager.get_token()
+        if token is None:
+            return {}
+        return {"Authorization": f"Bearer {token}"}
+
     def discover_repos(self) -> list[Path]:
-        """Find directories in workspace that have test_results.json."""
+        """Find directories under workspace that have test_results.json (any depth)."""
         if not self._workspace_root.exists():
             return []
-        repos = []
-        for child in sorted(self._workspace_root.iterdir()):
-            if child.is_dir() and (child / _RESULTS_REL).exists():
-                repos.append(child)
+        _depth = len(_RESULTS_REL.parts)  # .paircoder / telemetry / test_results.json
+        repos = sorted({
+            p.parents[_depth - 1]
+            for p in self._workspace_root.rglob(str(_RESULTS_REL))
+            if p.is_file()
+        })
         return repos
 
     def collect_summary(self, repo: Path) -> dict | None:
@@ -109,8 +123,9 @@ class CISummaryCollector:
                 }],
             }
             try:
+                headers = await self._auth_headers()
                 resp = await self._http.post(
-                    f"{self._config.a2a_url}/signals", json=batch,
+                    f"{self._config.a2a_url}/signals", json=batch, headers=headers,
                 )
                 resp.raise_for_status()
             except (httpx.HTTPStatusError, httpx.HTTPError) as exc:

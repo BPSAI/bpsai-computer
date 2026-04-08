@@ -70,6 +70,15 @@ class TestRepoDiscovery:
         repo_names = {r.name for r in repos}
         assert repo_names == {"repo-a", "repo-b"}
 
+    def test_discovers_nested_repos(self, pusher, config):
+        ws = pusher._workspace_root
+        ws.mkdir(parents=True)
+        _create_repo_with_signals(ws / "org", "nested-repo", [_make_signal()])
+
+        repos = pusher.discover_repos()
+        assert len(repos) == 1
+        assert repos[0].name == "nested-repo"
+
     def test_empty_workspace_returns_empty(self, pusher):
         pusher._workspace_root.mkdir(parents=True)
         assert pusher.discover_repos() == []
@@ -156,6 +165,21 @@ class TestBatchAssembly:
         assert len(batch["signals"]) == 2
         assert batch["signals"][0]["timestamp"] == "2026-03-31T00:01:00+00:00"
 
+    def test_scrub_credentials_in_payload(self, pusher, config):
+        """Credentials in signal payloads are scrubbed before POST."""
+        signal = {
+            "signal_type": "api_failure",
+            "severity": "warning",
+            "timestamp": "2026-03-31T00:00:00+00:00",
+            "payload": {"api_key": "sk-ant-abc123defghijklmnop"},
+            "source": "automated",
+        }
+        batch = pusher.build_batch(repo_name="test-repo", signals=[signal])
+
+        payload_str = json.dumps(batch["signals"][0]["payload"])
+        assert "sk-ant-" not in payload_str
+        assert "REDACTED" in payload_str
+
 
 class TestPushToA2A:
     """AC: Signals POSTed to A2A /signals endpoint with correct fields."""
@@ -195,6 +219,53 @@ class TestPushToA2A:
         assert pusher.get_cursor(str(repo)) == 3
         # Cursor persisted to disk
         assert cursor_path.exists()
+
+    @respx.mock
+    async def test_cursor_uses_single_read_no_toctou(self, pusher, config):
+        """Cursor advance uses line count from the single read, not a second read_text()."""
+        ws = pusher._workspace_root
+        ws.mkdir(parents=True)
+        lines = [_make_signal() for _ in range(3)]
+        repo = _create_repo_with_signals(ws, "repo-a", lines)
+
+        # After the push reads the file, append more lines before POST returns
+        original_post = pusher._http.post
+
+        async def post_and_append(*args, **kwargs):
+            # Append a line to simulate concurrent write
+            signals_file = repo / ".paircoder" / "telemetry" / "signals.jsonl"
+            signals_file.write_text(signals_file.read_text() + _make_signal() + "\n")
+            return httpx.Response(200, json={"ok": True})
+
+        respx.post(f"{BASE}/signals").mock(side_effect=post_and_append)
+
+        await pusher.push_signals()
+
+        # Cursor should be 3 (from original read), NOT 4 (from re-reading)
+        assert pusher.get_cursor(str(repo)) == 3
+
+    @respx.mock
+    async def test_auth_headers_sent_when_token_manager_set(self, config, cursor_path):
+        """POST includes Authorization header when token_manager is provided."""
+        from unittest.mock import AsyncMock
+
+        mock_tm = AsyncMock()
+        mock_tm.get_token = AsyncMock(return_value="test-jwt-token")
+        pusher = SignalPusher(config=config, cursor_path=cursor_path, token_manager=mock_tm)
+
+        ws = pusher._workspace_root
+        ws.mkdir(parents=True)
+        _create_repo_with_signals(ws, "repo-a", [_make_signal()])
+
+        route = respx.post(f"{BASE}/signals").mock(
+            return_value=httpx.Response(200, json={"ok": True})
+        )
+
+        await pusher.push_signals()
+
+        assert route.called
+        auth = route.calls[0].request.headers.get("authorization")
+        assert auth == "Bearer test-jwt-token"
 
 
 class TestPushFailureResilience:

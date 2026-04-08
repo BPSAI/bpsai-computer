@@ -58,6 +58,15 @@ class TestRepoDiscovery:
         names = {r.name for r in repos}
         assert names == {"repo-a", "repo-b"}
 
+    def test_discovers_nested_git_repos(self, collector):
+        ws = collector._workspace_root
+        ws.mkdir(parents=True)
+        _make_git_repo(ws / "org", "nested-repo")
+
+        repos = collector.discover_repos()
+        assert len(repos) == 1
+        assert repos[0].name == "nested-repo"
+
     def test_empty_workspace(self, collector):
         collector._workspace_root.mkdir(parents=True)
         assert collector.discover_repos() == []
@@ -211,6 +220,30 @@ class TestPushToA2A:
         assert sig["signal_type"] == "git_summary"
         assert sig["severity"] == "info"
         assert sig["payload"]["commit_count"] == 2
+
+    @respx.mock
+    async def test_auth_headers_sent_when_token_manager_set(self, config, cursor_path):
+        """POST includes Authorization header when token_manager is provided."""
+        from unittest.mock import AsyncMock
+
+        mock_tm = AsyncMock()
+        mock_tm.get_token = AsyncMock(return_value="test-jwt-token")
+        collector = GitSummaryCollector(config=config, cursor_path=cursor_path, token_manager=mock_tm)
+
+        ws = collector._workspace_root
+        ws.mkdir(parents=True)
+        _make_git_repo(ws, "repo-a")
+
+        summary = {"head_sha": "abc", "commit_count": 1, "authors": [], "branch": "main", "ahead": 0, "behind": 0, "open_pr_branches": 0}
+        with patch.object(collector, "collect_summary", return_value=summary):
+            route = respx.post(f"{BASE}/signals").mock(
+                return_value=httpx.Response(200, json={"ok": True})
+            )
+            await collector.push_summaries()
+
+        assert route.called
+        auth = route.calls[0].request.headers.get("authorization")
+        assert auth == "Bearer test-jwt-token"
 
     @respx.mock
     async def test_cursor_advanced_on_success(self, collector, config, cursor_path):
