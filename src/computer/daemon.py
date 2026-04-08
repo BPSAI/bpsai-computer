@@ -13,8 +13,10 @@ from typing import Awaitable, Callable
 
 from computer.a2a_client import A2AClient
 from computer.auth import TokenManager
+from computer.ci_collector import CISummaryCollector
 from computer.config import DaemonConfig
 from computer.dispatcher import DispatchExecutor, DispatchResult, parse_dispatch, parse_resume
+from computer.git_collector import GitSummaryCollector
 from computer.lifecycle import SessionLifecycle, extract_session_id
 from computer.signal_pusher import SignalPusher
 from computer.streamer import OutputStreamer
@@ -54,6 +56,8 @@ class Daemon:
         )
         self.executor = DispatchExecutor(config)
         self.signal_pusher = SignalPusher(config=config)
+        self.git_collector = GitSummaryCollector(config=config)
+        self.ci_collector = CISummaryCollector(config=config)
         if not config.a2a_url.startswith("https://"):
             log.warning("a2a_url is not HTTPS: %s — traffic will be unencrypted", config.a2a_url)
 
@@ -201,6 +205,14 @@ class Daemon:
                     await self.signal_pusher.push_signals()
                 except Exception as exc:
                     log.warning("Signal push error: %s", exc)
+                try:
+                    await self.git_collector.push_summaries()
+                except Exception as exc:
+                    log.warning("Git summary push error: %s", exc)
+                try:
+                    await self.ci_collector.push_summaries()
+                except Exception as exc:
+                    log.warning("CI summary push error: %s", exc)
                 await asyncio.sleep(self.config.poll_interval)
         except asyncio.CancelledError:
             pass
@@ -208,6 +220,8 @@ class Daemon:
             self.running = False
             await self.a2a.close()
             await self.signal_pusher.close()
+            await self.git_collector.close()
+            await self.ci_collector.close()
             if self._token_manager:
                 await self._token_manager.close()
             log.info("Daemon stopped")
