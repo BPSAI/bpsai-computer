@@ -1,5 +1,7 @@
 # Sprint Plan — Global Execution
 
+> **DEPRECATED (2026-04-08):** This file is superseded by [execution-priorities.md](execution-priorities.md), which is the current source of truth for execution planning. This file is retained for historical reference only.
+
 > **Principle:** One sprint, multiple repos, one plan. Computer orchestrates.
 
 ---

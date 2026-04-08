@@ -1,6 +1,6 @@
 # Execution Priorities — Post-Unified-Auth Assessment
 
-> **Updated:** 2026-04-07 (v2.21.4 released, Iris S12-S13 shipped, Amunet S4 complete, Metis fixed, extraction plan aligned)
+> **Updated:** 2026-04-08 (Phase B complete, agent-core v0.3.0, extractions done, CLI v2.21.5)
 > **Authors:** Mike Doggett + David Wiens + Computer
 > **Purpose:** Priority-ranked execution plan for next sprint planning
 > **Principle:** Ship the intelligence layer first. Every sprint that improves planning, retrieval, and self-awareness makes every subsequent sprint faster. Features ship faster through a smarter system than through a dumber one shipping features.
@@ -65,22 +65,26 @@ The framework has served as the proving ground for orchestration machinery (SENS
 
 | Item | Repo | Effort | Status | Notes |
 |------|------|--------|--------|-------|
-| Org setup | bpsai-support | ~5cx | Ready | Create BPS org, add Mike/David/Kevin |
-| CD3: Daemon JWT | bpsai-computer | ~15cx | Ready | Daemon authenticates with operator-token |
-| Metis fleet visibility | bpsai-computer + A2A + bot | ~50cx | Ready | Daemon signal push, /signals endpoint, Metis reader |
+| Org setup | bpsai-support | ~5cx | COMPLETE | BPS org created, Mike/David/Kevin added |
+| CD3: Daemon JWT | bpsai-computer | ~15cx | In Progress — PR open | Daemon authenticates with operator-token |
+| Metis fleet visibility | bpsai-computer + A2A + bot | ~50cx | In Progress — PR open | Daemon signal push, /signals endpoint, Metis reader |
 | CC dispatch UI | bpsai-command-center | ~20cx | Ready | Trigger dispatches from Command Center UI |
 
 **Milestone:** CC → daemon → execute → result loop working. First taste of working from Command Center.
 
 ### Phase B: Clean the Foundation
 
+**Phase B: COMPLETE ✅ — Framework is clean shared library (1,146 tests)**
+
+> A2A prototype removed from framework (2026-04-08).
+
 | Item | Repo | Effort | Status | Notes |
 |------|------|--------|--------|-------|
-| AF2: Agent Foundry Phase 2 | bpsai-agents | ~100cx | Backlog ready | agent-enforce + agent-lounge packages. Prerequisite for all extractions. |
-| Twin extraction | FW → bpsai-agents | ~60-80cx | Backlog ready (twin-extraction.md) | Voice/generation/knowledge out of engine/ |
-| Hook extraction | FW → bot + computer | ~40-60cx | Needs backlog | SENSE/LEARN hooks to owning agents per recursive-enforcement-architecture.md Section 4a |
-| Portfolio docs migration | FW → bpsai-computer | ~30cx | Needs backlog | status.yaml, decisions, hypotheses, execution-priorities |
-| Dead code cleanup | FW | ~10cx | Listed in twin-extraction.md | dispatch_types.py, enforcement_config.py, content_router.py |
+| AF2: Agent Foundry Phase 2 | bpsai-agents | ~100cx | COMPLETE | agent-core v0.3.0 shipped: multi-plan, Vaivora agent, clustering, synthesis |
+| Twin extraction | FW → bpsai-twins | ~60-80cx | COMPLETE | bpsai-twins extracted (65 tests) |
+| Hook extraction | FW → bot + computer | ~40-60cx | COMPLETE | SENSE/LEARN hooks extracted to owning agents |
+| Portfolio docs migration | FW → bpsai-computer | ~30cx | COMPLETE | status.yaml, decisions, hypotheses, execution-priorities migrated |
+| Dead code cleanup | FW | ~10cx | COMPLETE | dispatch_types.py, enforcement_config.py, content_router.py removed |
 
 **Milestone:** Framework is a clean shared library — data stores, orchestration primitives, enforcement implementations. No behavior, no portfolio state, no agent-specific hooks.
 
@@ -102,7 +106,7 @@ The framework has served as the proving ground for orchestration machinery (SENS
 | Iris Phase 3b: produce 4 videos | Kevin | Next | Pipeline complete (S11-S13). README update first. |
 | Iris S13 review fixes | Kevin | 13 findings posted | PR #20, 7 P1 + 6 P2 |
 | Amunet: Lounge codebase panel | Kevin | Backlog ready (LG-CP, 58cx) | Consume Amunet output in Lounge 3D |
-| CLI v2.21.4 released | David | Complete | Review command, targeted tests, engage fixes |
+| CLI v2.21.5 released | David | Complete | Review command, targeted tests, engage fixes |
 | CLI-EB: enforcement bootstrap | David | Backlog ready (115cx) | Dep split + branch enforcement |
 | CLI-IMS: intent merge strategy | David | Backlog ready (50cx) | Squash vs merge based on intent |
 | Metis dedup fix | David | Shipped | Cycle loop fixed, git identity, no exclusions |
@@ -135,12 +139,13 @@ PHASE A — Wire the Pipes:
 ├── CC dispatch UI — trigger dispatches from Command Center
 │   MILESTONE: CC → daemon → execute → result loop working
 │
-PHASE B — Clean the Foundation:
-├── AF2: Agent Foundry Phase 2 (100cx) — agent-enforce + agent-lounge
-├── Twin extraction (60-80cx) — voice/generation out of framework
-├── Hook extraction (~40-60cx) — SENSE/LEARN hooks to bot + computer
-├── Portfolio docs migration (~30cx) — status.yaml, decisions → computer
-│   MILESTONE: Framework is a clean shared library
+PHASE B — Clean the Foundation: COMPLETE ✅
+├── AF2: Agent Foundry Phase 2 — agent-core v0.3.0 shipped ✅
+├── Twin extraction — bpsai-twins (65 tests) ✅
+├── Hook extraction — SENSE/LEARN to owning agents ✅
+├── Portfolio docs migration — all docs in bpsai-computer ✅
+├── Dead code cleanup — removed from framework ✅
+│   MILESTONE: Framework is a clean shared library (1,146 tests)
 │
 PHASE C — Build Orchestration in Computer (replaces G3):
 ├── Navigator orchestration (~50cx) — plan, dispatch, monitor, review
@@ -194,24 +199,26 @@ All 4 candidates now have production code:
 | **TH** (Telemetry Integrity) | Complete | -- |
 | **Briefing** (Cross-Session) | Complete | -- |
 | **Unified Auth** | Complete | -- |
-| **Phase A** (Wire the Pipes) | Next | ~90cx |
-| **Phase B** (Clean Foundation) | After A | ~240-280cx |
+| **Phase A** (Wire the Pipes) | In Progress | ~90cx |
+| **Phase B** (Clean Foundation) | Complete | -- |
 | **Phase C** (Computer Orchestration) | After B | ~150cx |
 | **Tier 4** (Features) | Backlogged | ~700cx+ |
 
-## Test Portfolio (2026-04-07)
+## Test Portfolio (2026-04-08)
 
 | Repo | Tests | Notes |
 |------|-------|-------|
-| CLI | 12,500+ | v2.21.4: review command, targeted tests, engage fixes |
-| Framework | 1,708 | Sense+Learn+Dispatch+TH+integration |
+| CLI | 12,500+ | v2.21.5: review command, targeted tests, engage fixes |
+| Framework | 1,146 | Clean shared library (post-extraction) |
 | Bot | 2,961 | Metis Phase 1+2 + briefings + dedup fix |
 | A2A | 200+ | JWT auth + Key Vault + org scoping |
 | Command Center | 200+ | Zoho OAuth + session catalog + UAT |
 | Computer | 144 | CD2 + security fixes |
-| Agents | 133 | agent-core v0.2.0 |
+| Agents | 133 | agent-core v0.3.0 |
+| Twins | 65 | Extracted from framework |
+| Vaivora | 49 | Extracted, synthesis + clustering |
 | Iris | 3,600+ | S13 Phase 3 (instructional pipeline) |
 | Amunet | 704 | S4 workspace validation |
 | Lounge | 318 | Agent directory + briefing panel |
 | Support | 1,651 | Portal JWT + license linking + functions |
-| **Total** | **~24,200+** | |
+| **Total** | **~23,800+** | |
