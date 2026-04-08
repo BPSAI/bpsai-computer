@@ -1,5 +1,5 @@
 project_name: bpsai-computer
-version: 2.21.5
+version: 2.21.2
 description: "Computer\u2080 \u2014 workspace orchestrator and dispatch daemon"
 project:
   name: Computer
@@ -15,7 +15,6 @@ workflow:
   context_dir: context
   plans_dir: .paircoder/plans
   tasks_dir: .paircoder/tasks
-  require_feature_branch: false
 pack:
   default_name: agent_pack.tgz
   excludes:

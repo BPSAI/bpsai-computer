@@ -41,7 +41,7 @@ class TokenManager:
             self._expires_at = data["expires_at"]
             log.info("JWT obtained, expires_at=%.0f", self._expires_at)
             return self._token
-        except (httpx.HTTPError, KeyError, Exception) as exc:
+        except (httpx.HTTPError, KeyError, ValueError) as exc:
             log.warning("Failed to obtain JWT: %s", exc)
             self._token = None
             self._expires_at = 0.0

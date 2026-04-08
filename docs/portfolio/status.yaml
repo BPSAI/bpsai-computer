@@ -1,15 +1,15 @@
 # Portfolio Status — Machine-readable, always current
 # Query: bpsai-pair status --portfolio (future), or read directly
-# Updated: 2026-04-07 afternoon (v2.21.4 released, Iris S13 reviewed, Amunet S4 complete, Metis fixed)
+# Updated: 2026-04-08 (v2.21.5 released, Iris S13 merged, Phase B extraction complete, agent-core v0.3.0)
 # NOTE: For priority decisions, also read execution-priorities.md
 
 repos:
   paircoder:
     shortcode: CLI
-    latest_sprint: CLI-RC
+    latest_sprint: CLI-IMS
     sprint_status: complete
-    sprint_theme: "Review Command + Targeted Tests + Engage Fixes"
-    version: 2.21.4
+    sprint_theme: "Branch Enforcement + Intent Merge Strategy"
+    version: 2.21.5
     tests: 12500+
     branch: main
     dev_synced: true
@@ -182,17 +182,17 @@ repos:
 
   bpsai-agents:
     shortcode: AGT
-    latest_sprint: AF1
+    latest_sprint: AF2
     sprint_status: complete
-    sprint_theme: "Agent Core Phase 1 — extract base package"
-    tests: 90
+    sprint_theme: "Agent Foundry Phase 2 — enforce + lounge contracts"
+    tests: 376
     branch: main
-    published: true  # bpsai-agent-core v0.1.0 on PyPI
+    published: true
     packages:
-      agent-core: "v0.1.0 — BaseAgent, Phase.EXECUTE, QualityProfile, AgentCard, LoopRunner, hooks, enforcement, LLMCall"
-      agent-lounge: "placeholder — Phase 2"
-      agent-enforce: "placeholder — Phase 2"
-    next: "Agent Foundry Phase 2 — multi-plan + first real agent (Vaivora / IT Ops)"
+      agent-core: "v0.3.0 — BaseAgent, multi-plan, clustering, synthesis, hook protocols, enforcement ABCs"
+      agent-enforce: "v0.1.0 — EnforcementGate, pipelines, signal validation, evidence mechanics, hypothesis gates"
+      agent-lounge: "v0.1.0 — HypothesisLifecycle, channels, beliefs, evidence mapper, briefings, standups"
+    next: "Domain-specific rule and channel implementations in consuming agents"
 
   bpsai-computer:
     shortcode: CMP
@@ -232,9 +232,9 @@ repos:
   bpsai-iris:
     shortcode: IRIS
     latest_sprint: S13
-    sprint_status: in_review
-    sprint_theme: "Instructional Content Pipeline (Phase 3)"
-    tests: 3600+
+    sprint_status: complete
+    sprint_theme: "Instructional Content Pipeline (Phase 3) -- SHIPPED"
+    tests: 3787
     branch: main
     stack: "Python + Playwright + FFmpeg + ElevenLabs"
     owner: Kevin
@@ -243,7 +243,7 @@ repos:
     scene_types: 25
     phase1_complete: true  # Sprint 11: voice-first pipeline inversion
     phase2_complete: true  # Sprint 12: diagnostic feedback loop
-    phase3_in_review: true  # Sprint 13: instructional content pipeline (PR #20)
+    phase3_complete: true  # Sprint 13: instructional content pipeline (PR #20)
     s11_shipped:
       - "AudioConfig model with 4 modes (none, tts, file, script)"
       - "resolve_durations(): TTS synthesize per-scene, file mode probe"
@@ -318,14 +318,16 @@ repos:
     created: "2026-03-30 (Mike)"
     description: "Monorepo workspace for agent packages: agent-core, agent-lounge, agent-enforce."
     packages:
-      agent-core: "v0.2.0 -- BaseAgent, Observation, Transport, FileTransport, emit()/aemit(), QualityProfile, AgentCard, LoopRunner"
-      agent-lounge: "placeholder -- AF2"
-      agent-enforce: "placeholder -- AF2"
-    tests: 133
+      agent-core: "v0.3.0 -- BaseAgent, multi-plan, clustering, synthesis, hook protocols, enforcement ABCs, observations, transports"
+      agent-enforce: "v0.1.0 -- EnforcementGate, pipelines, signal validation, evidence mechanics, hypothesis gates"
+      agent-lounge: "v0.1.0 -- HypothesisLifecycle, channels, beliefs, evidence mapper, briefings, standups"
+    tests: 376
     af1_complete: true
-    pre_af2_complete: true  # Observation protocol mini-sprint via Engage (6/6 tasks)
+    af2_complete: true
+    pre_af2_complete: true
     pre_af2_shipped: "Observation type, Transport/AsyncTransport protocols, FileTransport, emit()/aemit() on BaseAgent"
-    next: "AF2 -- multi-plan + Vaivora (IT Ops) + A2ATransport"
+    af2_shipped: "agent-enforce v0.1.0 + agent-lounge v0.1.0 on PyPI (2026-04-08)"
+    next: "Domain-specific rule and channel implementations in consuming agents"
 
   bpsai-amunet:
     shortcode: AMU
@@ -484,19 +486,19 @@ design_decisions:
 
 # Test counts (2026-04-07 afternoon)
 test_summary:
-  cli: 12500+
-  framework: 1708
-  bot: 2961  # after Metis fixes
-  iris: 3600+  # S13 adds ~190 tests
+  cli: 12500+  # v2.21.5
+  framework: 1246  # post-extraction
+  bot: 2971  # post-extraction, agent-core v0.3.0  # after Metis fixes
+  iris: 3787  # S13 Phase 3 merged  # S13 adds ~190 tests
   lounge: 318
   a2a: 200+
-  agents: 133
+  agents: 199  # agent-core v0.3.0
   brightdata_demo: 53
-  computer: 144
+  computer: 164  # hooks migrated
   amunet: 704
   command_center: 200+
   support: 1651
-  total: 24200+
+  total: 24500+
 
 # Deferred work — tracked items not yet scheduled
 deferred_work:
@@ -590,3 +592,36 @@ blockers:
   # a2a-cutover: RESOLVED 2026-03-27 — a2a.paircoder.ai deployed, TLS bound, health check passing. Consumer cutover next (1+ week stable).
   # bot-pr3-fixes: RESOLVED 2026-03-27 — P1 fixes applied, PR merged
   # dynamic-arch: RESOLVED — G2.D1/D2 specs delivered, G2.1/G2.2 implemented
+
+  bpsai-twins:
+    shortcode: TWIN
+    latest_sprint: initial
+    sprint_status: complete
+    sprint_theme: "Twin agents extracted from framework"
+    tests: 65
+    branch: main
+    owner: David + Mike
+    extracted_from: bpsai-framework
+    next: "Wire into fleet (A2A card, observation emission)"
+
+  bpsai-vaivora:
+    shortcode: VAI
+    latest_sprint: AF2
+    sprint_status: complete
+    sprint_theme: "IT Operations agent -- first standalone agent"
+    tests: 49
+    branch: main
+    owner: Mike
+    mythology: "Lithuanian goddess of perception -- sees infrastructure implications"
+    extracted_from: bpsai-agents/agent-core
+    next: "Deploy to A2A fleet, wire into Command Center agent grid"
+
+# Phase B extraction status (2026-04-08)
+extraction_status:
+  twin_extraction: complete  # bpsai-twins standalone repo, 65 tests
+  vaivora_extraction: complete  # bpsai-vaivora standalone repo, 49 tests
+  hook_extraction: complete  # 4 hooks to Metis, 8 hooks to Computer
+  portfolio_docs_migration: complete  # status.yaml, decisions, hypotheses now in bpsai-computer
+  dead_code_cleanup: complete  # dispatch_types, enforcement_config, content_router removed
+  framework_state: "Clean shared library -- orchestration, enforcement, cognitive types, idea lifecycle"
+  agent_core_version: "v0.3.0 (hook protocols, sense/learn events, multi-plan)"

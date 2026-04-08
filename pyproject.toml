@@ -8,6 +8,7 @@ authors = [{name = "BPS AI Software", email = "support@bpsaisoftware.com"}]
 dependencies = [
     "httpx>=0.27.0",
     "pyyaml>=6.0",
+    "bpsai-agent-core>=0.3.0",
 ]
 
 [project.optional-dependencies]
