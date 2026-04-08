@@ -9,12 +9,14 @@ import re
 import time
 import uuid
 from collections import OrderedDict
+from pathlib import Path
 from typing import Awaitable, Callable
 
 from computer.a2a_client import A2AClient
 from computer.auth import TokenManager
 from computer.config import DaemonConfig
 from computer.dispatcher import DispatchExecutor, DispatchResult, parse_dispatch, parse_resume
+from computer.license_discovery import LicenseDiscoveryError, discover_license_id
 from computer.lifecycle import SessionLifecycle, extract_session_id
 from computer.streamer import OutputStreamer
 
@@ -22,6 +24,18 @@ log = logging.getLogger(__name__)
 
 _EXIT_CODE_RE = re.compile(r"[Ee]xit code (\d+)")
 _MAX_PROCESSED_IDS = 10_000
+
+
+def resolve_license_id(
+    config: DaemonConfig, home_dir: Path | None = None,
+) -> str:
+    """Return license_id from config (if set) or auto-discover from license.json.
+
+    Raises ``LicenseDiscoveryError`` if neither source provides a license_id.
+    """
+    if config.license_id:
+        return config.license_id
+    return discover_license_id(home_dir=home_dir)
 
 
 class Daemon:
@@ -32,17 +46,23 @@ class Daemon:
         self.running = False
         self._processed_ids: OrderedDict[str, None] = OrderedDict()
 
-        # Set up JWT auth if license_id is configured
+        # Resolve license_id: config value wins, then auto-discover from file
+        license_id: str | None = None
+        try:
+            license_id = resolve_license_id(config)
+        except LicenseDiscoveryError as exc:
+            log.warning("License discovery failed: %s", exc)
+
         token_manager: TokenManager | None = None
-        if config.license_id:
+        if license_id:
             token_manager = TokenManager(
                 paircoder_api_url=config.paircoder_api_url,
-                license_id=config.license_id,
+                license_id=license_id,
                 operator=config.operator,
             )
-            log.info("JWT auth enabled: license_id=%s", config.license_id)
+            log.info("JWT auth enabled: license_id=%s", license_id)
         else:
-            log.warning("No license_id configured — A2A calls will not include JWT auth")
+            log.warning("No license_id available — A2A calls will not include JWT auth")
         self._token_manager = token_manager
 
         self.a2a = A2AClient(
