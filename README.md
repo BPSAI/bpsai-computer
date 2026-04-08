@@ -40,7 +40,7 @@ Create `~/.bpsai-computer/config.yaml`:
 ```yaml
 operator: mike            # your operator ID (from portal profile)
 workspace: bpsai          # workspace name
-workspace_root: ~/workspace   # root dir containing target repos
+workspace_root: /home/mike/workspace   # absolute path to dir containing target repos
 a2a_url: https://a2a.paircoder.ai
 poll_interval: 5          # seconds between A2A polls
 process_timeout: 1800     # 30 minutes max per dispatch
