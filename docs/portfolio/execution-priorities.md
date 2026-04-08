@@ -80,7 +80,7 @@ The framework has served as the proving ground for orchestration machinery (SENS
 
 | Item | Repo | Effort | Status | Notes |
 |------|------|--------|--------|-------|
-| AF2: Agent Foundry Phase 2 | bpsai-agents | ~100cx | COMPLETE | agent-core v0.3.0 shipped: multi-plan, Vaivora agent, clustering, synthesis |
+| AF2: Agent Foundry Phase 2 | bpsai-agents | ~100cx | COMPLETE | agent-core v0.3.0, agent-enforce v0.1.0, agent-lounge v0.1.0 — all on PyPI |
 | Twin extraction | FW → bpsai-twins | ~60-80cx | COMPLETE | bpsai-twins extracted (65 tests) |
 | Hook extraction | FW → bot + computer | ~40-60cx | COMPLETE | SENSE/LEARN hooks extracted to owning agents |
 | Portfolio docs migration | FW → bpsai-computer | ~30cx | COMPLETE | status.yaml, decisions, hypotheses, execution-priorities migrated |
@@ -140,7 +140,7 @@ PHASE A — Wire the Pipes:
 │   MILESTONE: CC → daemon → execute → result loop working
 │
 PHASE B — Clean the Foundation: COMPLETE ✅
-├── AF2: Agent Foundry Phase 2 — agent-core v0.3.0 shipped ✅
+├── AF2: Agent Foundry Phase 2 — core v0.3.0 + enforce v0.1.0 + lounge v0.1.0 on PyPI ✅
 ├── Twin extraction — bpsai-twins (65 tests) ✅
 ├── Hook extraction — SENSE/LEARN to owning agents ✅
 ├── Portfolio docs migration — all docs in bpsai-computer ✅

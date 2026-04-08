@@ -182,17 +182,17 @@ repos:
 
   bpsai-agents:
     shortcode: AGT
-    latest_sprint: AF1
+    latest_sprint: AF2
     sprint_status: complete
-    sprint_theme: "Agent Core Phase 1 — extract base package"
-    tests: 90
+    sprint_theme: "Agent Foundry Phase 2 — enforce + lounge contracts"
+    tests: 376
     branch: main
-    published: true  # bpsai-agent-core v0.1.0 on PyPI
+    published: true
     packages:
-      agent-core: "v0.1.0 — BaseAgent, Phase.EXECUTE, QualityProfile, AgentCard, LoopRunner, hooks, enforcement, LLMCall"
-      agent-lounge: "placeholder — Phase 2"
-      agent-enforce: "placeholder — Phase 2"
-    next: "Agent Foundry Phase 2 — multi-plan + first real agent (Vaivora / IT Ops)"
+      agent-core: "v0.3.0 — BaseAgent, multi-plan, clustering, synthesis, hook protocols, enforcement ABCs"
+      agent-enforce: "v0.1.0 — EnforcementGate, pipelines, signal validation, evidence mechanics, hypothesis gates"
+      agent-lounge: "v0.1.0 — HypothesisLifecycle, channels, beliefs, evidence mapper, briefings, standups"
+    next: "Domain-specific rule and channel implementations in consuming agents"
 
   bpsai-computer:
     shortcode: CMP
@@ -318,14 +318,16 @@ repos:
     created: "2026-03-30 (Mike)"
     description: "Monorepo workspace for agent packages: agent-core, agent-lounge, agent-enforce."
     packages:
-      agent-core: "v0.2.0 -- BaseAgent, Observation, Transport, FileTransport, emit()/aemit(), QualityProfile, AgentCard, LoopRunner"
-      agent-lounge: "placeholder -- AF2"
-      agent-enforce: "placeholder -- AF2"
-    tests: 133
+      agent-core: "v0.3.0 -- BaseAgent, multi-plan, clustering, synthesis, hook protocols, enforcement ABCs, observations, transports"
+      agent-enforce: "v0.1.0 -- EnforcementGate, pipelines, signal validation, evidence mechanics, hypothesis gates"
+      agent-lounge: "v0.1.0 -- HypothesisLifecycle, channels, beliefs, evidence mapper, briefings, standups"
+    tests: 376
     af1_complete: true
-    pre_af2_complete: true  # Observation protocol mini-sprint via Engage (6/6 tasks)
+    af2_complete: true
+    pre_af2_complete: true
     pre_af2_shipped: "Observation type, Transport/AsyncTransport protocols, FileTransport, emit()/aemit() on BaseAgent"
-    next: "AF2 -- multi-plan + Vaivora (IT Ops) + A2ATransport"
+    af2_shipped: "agent-enforce v0.1.0 + agent-lounge v0.1.0 on PyPI (2026-04-08)"
+    next: "Domain-specific rule and channel implementations in consuming agents"
 
   bpsai-amunet:
     shortcode: AMU
