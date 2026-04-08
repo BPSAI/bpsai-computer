@@ -20,8 +20,8 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     sub = parser.add_subparsers(dest="command", required=True)
 
     daemon_p = sub.add_parser("daemon", help="Run the dispatch daemon")
-    daemon_p.add_argument("--operator", required=True, help="Operator identity")
-    daemon_p.add_argument("--workspace", required=True, help="Workspace identity")
+    daemon_p.add_argument("--operator", default=None, help="Operator identity")
+    daemon_p.add_argument("--workspace", default=None, help="Workspace identity (also selects config file)")
     daemon_p.add_argument("--workspace-root", default=None, help="Root directory for repos")
     daemon_p.add_argument("--a2a-url", default=None, help="A2A backend URL")
     daemon_p.add_argument("--poll-interval", type=int, default=None, help="Seconds between polls")
@@ -44,7 +44,11 @@ def main(argv: list[str] | None = None) -> None:
             "poll_interval": args.poll_interval,
             "process_timeout": args.process_timeout,
         }
-        cfg = load_config(config_path=config_path, overrides=overrides)
+        cfg = load_config(
+            config_path=config_path,
+            overrides=overrides,
+            workspace=args.workspace,
+        )
         daemon = Daemon(cfg)
 
         def _handle_signal(*_):
