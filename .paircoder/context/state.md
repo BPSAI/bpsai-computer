@@ -11,6 +11,18 @@
 
 ## What Was Just Done
 
+- **CD3.5 done** (2026-04-07)
+
+- **CD3.5 COMPLETE** — End-to-end JWT auth verification (bpsai-computer)
+  - ✓ Daemon starts with operator from config + auto-discovered license_id
+  - ✓ TokenManager obtains JWT from api.paircoder.ai/api/v1/auth/operator-token
+  - ✓ A2A accepts JWT (200 on poll, not 401)
+  - ✓ Test dispatch from CC reaches daemon (operator routing matches)
+  - ✓ Dispatch result posted back to A2A with valid JWT
+  - ✓ Integration test: 6 new e2e tests verify JWT present on all A2A requests
+  - ✓ README updated: license install, config with operator/workspace, JWT auth flow
+  - ✓ 162/162 tests passing, arch check clean
+
 - **CD3.4 done** (auto-updated by hook) (2026-04-07)
 
 - **CD3.4 COMPLETE** — Auto-discover license_id from license.json (bpsai-computer)
@@ -55,13 +67,13 @@
 
 ## What's Next
 
-1. CD3.5 (remaining sprint task)
+1. CD3 sprint complete — all tasks done
 2. Branch protection setup (BPSAI/paircoder#121)
 
 ```yaml
 project: bpsai-computer
 status: in_progress
-tests: 126 (bpsai-computer) + 15 new (bpsai-support)
+tests: 162 (bpsai-computer) + 15 new (bpsai-support)
 sprints_done: [CD1, CD2, CD2-FIX]
 sprint_active: CD3
 ```
