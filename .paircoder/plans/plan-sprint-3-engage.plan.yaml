@@ -11,6 +11,6 @@ phases:
   tasks:
   - CD3.4
   - CD3.5
-status: planned
+status: in_progress
 title: Sprint 3
 type: feature

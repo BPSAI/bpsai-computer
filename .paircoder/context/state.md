@@ -11,6 +11,13 @@
 
 ## What Was Just Done (2026-04-07)
 
+- **CD3.2 COMPLETE** — Include operator claim in portal JWT (bpsai-support FastAPI)
+  - ✓ `mint_access_token` adds `"operator"` claim from `user_data["operator_id"]`
+  - ✓ Claim only included when `operator_id` is not None (backward compat)
+  - ✓ `validate_portal_token` returns `operator` claim (already returns all claims)
+  - ✓ 5 new tests: include, omit-when-None, omit-when-missing, round-trip, round-trip-without
+  - ✓ 44/44 portal session tests passing, 136/136 auth tests passing
+
 - **CD3.1 COMPLETE** — Add operator_id to PortalUser (bpsai-support Function App)
   - ✓ `operator_id` column added to PortalUser model (String(100), unique, nullable)
   - ✓ Auto-generation: `first_name.lower() + "-" + secrets.token_hex(4)` (8 hex chars)
@@ -24,7 +31,7 @@
 
 ## What's Next
 
-1. CD3.2 — CD3.3 — CD3.4 — CD3.5 (remaining sprint tasks)
+1. CD3.3 — CD3.4 — CD3.5 (remaining sprint tasks)
 2. Branch protection setup (BPSAI/paircoder#121)
 
 ```yaml
