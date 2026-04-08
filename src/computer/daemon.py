@@ -6,6 +6,7 @@ import asyncio
 import logging
 import platform
 import re
+import shlex
 import time
 import uuid
 from collections import OrderedDict
@@ -45,7 +46,8 @@ class Daemon:
             )
             log.info("JWT auth enabled: license_id=%s", config.license_id)
         else:
-            log.warning("No license_id configured — A2A calls will not include JWT auth")
+            log.error("No license_id configured — cannot start daemon without identity")
+            raise SystemExit(1)
         self._token_manager = token_manager
 
         self.a2a = A2AClient(
@@ -55,9 +57,9 @@ class Daemon:
             token_manager=token_manager,
         )
         self.executor = DispatchExecutor(config)
-        self.signal_pusher = SignalPusher(config=config)
-        self.git_collector = GitSummaryCollector(config=config)
-        self.ci_collector = CISummaryCollector(config=config)
+        self.signal_pusher = SignalPusher(config=config, token_manager=token_manager)
+        self.git_collector = GitSummaryCollector(config=config, token_manager=token_manager)
+        self.ci_collector = CISummaryCollector(config=config, token_manager=token_manager)
         if not config.a2a_url.startswith("https://"):
             log.warning("a2a_url is not HTTPS: %s — traffic will be unencrypted", config.a2a_url)
 
@@ -140,7 +142,7 @@ class Daemon:
 
         await self.a2a.ack_message(msg.message_id, response="dispatched")
         preliminary_session_id = str(uuid.uuid4())
-        command = f"claude -p '{msg.prompt}' --dangerously-skip-permissions"
+        command = f"claude -p {shlex.quote(msg.prompt)} --dangerously-skip-permissions"
 
         session_id, result = await self._execute_with_lifecycle(
             message_id=msg.message_id,

@@ -25,7 +25,7 @@ class TokenManager:
 
     async def get_token(self) -> str | None:
         """Return cached token or fetch a new one. Returns None on failure."""
-        if self._token and time.time() < self._expires_at:
+        if self._token and time.time() < (self._expires_at - 60):
             return self._token
         return await self._fetch_token()
 

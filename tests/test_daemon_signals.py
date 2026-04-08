@@ -41,6 +41,7 @@ def config(workspace, tmp_path):
         a2a_url=BASE,
         poll_interval=1,
         process_timeout=30,
+        license_id="lic-test",
     )
 
 
