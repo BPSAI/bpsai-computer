@@ -11,6 +11,18 @@
 
 ## What Was Just Done (2026-04-07)
 
+- **CD3.3 COMPLETE** — Show operator ID in Command Center (bpsai-command-center)
+  - ✓ Added `operator?: string` to `JwtClaims` interface in `oauth.ts`
+  - ✓ `evaluateAuth` now returns `operatorId` from JWT `operator` claim
+  - ✓ Middleware sets `cc_operator_id` cookie (non-httpOnly) for client JS
+  - ✓ Callback, refresh-session, and logout routes updated for `cc_operator_id` cookie
+  - ✓ `getOperatorIdFromCookie()` helper in `use-operator.ts`
+  - ✓ `OperatorIdDisplay` component with copy-to-clipboard button
+  - ✓ Legacy users see "Not assigned — contact admin" when no operator ID
+  - ✓ Wired into dashboard header next to operator name
+  - ✓ 15 new tests (cookie helper, component, middleware integration)
+  - ✓ 227/227 tests passing (excluding 5 pre-existing failures)
+
 - **CD3.2 COMPLETE** — Include operator claim in portal JWT (bpsai-support FastAPI)
   - ✓ `mint_access_token` adds `"operator"` claim from `user_data["operator_id"]`
   - ✓ Claim only included when `operator_id` is not None (backward compat)
@@ -31,7 +43,7 @@
 
 ## What's Next
 
-1. CD3.3 — CD3.4 — CD3.5 (remaining sprint tasks)
+1. CD3.4 — CD3.5 (remaining sprint tasks)
 2. Branch protection setup (BPSAI/paircoder#121)
 
 ```yaml
