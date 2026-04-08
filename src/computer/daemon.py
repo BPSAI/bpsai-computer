@@ -16,6 +16,7 @@ from computer.auth import TokenManager
 from computer.config import DaemonConfig
 from computer.dispatcher import DispatchExecutor, DispatchResult, parse_dispatch, parse_resume
 from computer.lifecycle import SessionLifecycle, extract_session_id
+from computer.signal_pusher import SignalPusher
 from computer.streamer import OutputStreamer
 
 log = logging.getLogger(__name__)
@@ -52,6 +53,7 @@ class Daemon:
             token_manager=token_manager,
         )
         self.executor = DispatchExecutor(config)
+        self.signal_pusher = SignalPusher(config=config)
         if not config.a2a_url.startswith("https://"):
             log.warning("a2a_url is not HTTPS: %s — traffic will be unencrypted", config.a2a_url)
 
@@ -195,12 +197,17 @@ class Daemon:
                         await self._process_resume(raw_msg)
                     else:
                         await self._process_dispatch(raw_msg)
+                try:
+                    await self.signal_pusher.push_signals()
+                except Exception as exc:
+                    log.warning("Signal push error: %s", exc)
                 await asyncio.sleep(self.config.poll_interval)
         except asyncio.CancelledError:
             pass
         finally:
             self.running = False
             await self.a2a.close()
+            await self.signal_pusher.close()
             if self._token_manager:
                 await self._token_manager.close()
             log.info("Daemon stopped")
