@@ -61,9 +61,21 @@ def parse_dispatch(raw: dict) -> DispatchMessage:
             target=target,
             prompt=content["prompt"],
         )
-    except json.JSONDecodeError:
-        # Plain text format — content is the prompt, to_project is the target
+    except (json.JSONDecodeError, KeyError):
+        # Plain text format — content is the intent for Computer Prime
         to_project = raw.get("to_project", "")
+
+        # If dispatched to "computer", this is an intent for Computer Prime
+        # to orchestrate — run in bpsai-computer repo where Computer's
+        # CLAUDE.md, agents, skills, and context live
+        if to_project == "computer":
+            return DispatchMessage(
+                message_id=raw["id"],
+                agent="driver",
+                target="bpsai-computer",
+                prompt=raw.get("content", ""),
+            )
+
         return DispatchMessage(
             message_id=raw["id"],
             agent=to_project.replace("bpsai-", "") if to_project.startswith("bpsai-") else "driver",
