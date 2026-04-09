@@ -49,7 +49,7 @@ class A2AClient:
     async def poll_dispatches(self) -> list[dict]:
         """GET /messages/feed with dispatch filters. Returns [] on error."""
         params = {
-            "agent": "computer",
+            "project": "computer",
             "operator": self.operator,
             "workspace": self.workspace,
             "limit": "10",
