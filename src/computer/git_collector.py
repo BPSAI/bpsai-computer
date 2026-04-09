@@ -30,7 +30,7 @@ class GitSummaryCollector:
         self._config = config
         self._workspace_root = Path(config.workspace_root)
         self._cursor_path = cursor_path or (
-            Path.home() / ".bpsai-computer" / "git_cursors.json"
+            Path.home() / ".bpsai-computer" / config.workspace / "git_cursors.json"
         )
         self._token_manager = token_manager
         self._cursors: dict[str, str] = self._load_cursors()

@@ -32,7 +32,7 @@ class SignalPusher:
         self._config = config
         self._workspace_root = Path(config.workspace_root)
         self._cursor_path = cursor_path or (
-            Path.home() / ".bpsai-computer" / "signal_cursors.json"
+            Path.home() / ".bpsai-computer" / config.workspace / "signal_cursors.json"
         )
         self._token_manager = token_manager
         self._cursors: dict[str, int] = self._load_cursors()
