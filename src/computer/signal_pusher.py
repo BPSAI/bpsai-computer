@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
 import logging
 from pathlib import Path
@@ -18,6 +19,27 @@ if TYPE_CHECKING:
 log = logging.getLogger(__name__)
 
 _SIGNALS_REL = Path(".paircoder") / "telemetry" / "signals.jsonl"
+
+
+def _canonical_ts(ts: str) -> str:
+    """Normalize timestamp to YYYY-MM-DDTHH:MM:SSZ (canonical UTC, no microseconds)."""
+    if not ts:
+        return ts
+    from datetime import datetime, timezone
+
+    for fmt in ("%Y-%m-%dT%H:%M:%S%z", "%Y-%m-%dT%H:%M:%S.%f%z", "%Y-%m-%dT%H:%M:%SZ"):
+        try:
+            dt = datetime.strptime(ts, fmt)
+            return dt.astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+        except ValueError:
+            continue
+    return ts
+
+
+def _make_signal_id(signal_type: str, repo: str, ts: str, payload: dict) -> str:
+    """Generate deterministic signal_id from signal content for dedup."""
+    content = f"{signal_type}:{repo}:{ts}:{json.dumps(payload, sort_keys=True)}"
+    return hashlib.sha256(content.encode()).hexdigest()[:16]
 
 
 class SignalPusher:
@@ -98,21 +120,26 @@ class SignalPusher:
         return signals
 
     def build_batch(self, repo_name: str, signals: list[dict]) -> dict:
+        built = []
+        for s in signals:
+            ts = _canonical_ts(s.get("timestamp", ""))
+            payload = json.loads(
+                scrub_credentials(json.dumps(s.get("payload", {})))
+            )
+            sig_type = s.get("signal_type", "")
+            severity = s.get("severity", "")
+            signal_id = _make_signal_id(sig_type, repo_name, ts, payload)
+            built.append({
+                "signal_type": sig_type,
+                "severity": severity,
+                "timestamp": ts,
+                "payload": payload,
+                "signal_id": signal_id,
+            })
         return {
             "operator": self._config.operator,
             "repo": repo_name,
-            "signals": [
-                {
-                    "signal_type": s.get("signal_type", ""),
-                    "severity": s.get("severity", ""),
-                    "timestamp": s.get("timestamp", ""),
-                    "payload": json.loads(
-                        scrub_credentials(json.dumps(s.get("payload", {})))
-                    ),
-                    "source": s.get("source", ""),
-                }
-                for s in signals
-            ],
+            "signals": built,
         }
 
     async def push_signals(self) -> None:
@@ -139,7 +166,7 @@ class SignalPusher:
             try:
                 headers = await self._auth_headers()
                 resp = await self._http.post(
-                    f"{self._config.a2a_url}/signals",
+                    f"{self._config.a2a_url}/signals/batch",
                     json=batch,
                     headers=headers,
                 )

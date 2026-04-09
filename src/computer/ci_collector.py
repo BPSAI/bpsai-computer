@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
 import logging
 from datetime import datetime, timezone
@@ -17,6 +18,12 @@ if TYPE_CHECKING:
 log = logging.getLogger(__name__)
 
 _RESULTS_REL = Path(".paircoder") / "telemetry" / "test_results.json"
+
+
+def _make_signal_id(signal_type: str, repo: str, ts: str, payload: dict) -> str:
+    """Generate deterministic signal_id from signal content for dedup."""
+    content = f"{signal_type}:{repo}:{ts}:{json.dumps(payload, sort_keys=True)}"
+    return hashlib.sha256(content.encode()).hexdigest()[:16]
 
 
 class CISummaryCollector:
@@ -111,21 +118,24 @@ class CISummaryCollector:
             if not summary:
                 continue
             result_ts = summary["timestamp"]
+            ts = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+            sig_type = "ci_summary"
+            signal_id = _make_signal_id(sig_type, repo.name, ts, summary)
             batch = {
                 "operator": self._config.operator,
                 "repo": repo.name,
                 "signals": [{
-                    "signal_type": "ci_summary",
+                    "signal_type": sig_type,
                     "severity": "info",
-                    "timestamp": datetime.now(timezone.utc).isoformat(),
+                    "timestamp": ts,
                     "payload": summary,
-                    "source": "daemon",
+                    "signal_id": signal_id,
                 }],
             }
             try:
                 headers = await self._auth_headers()
                 resp = await self._http.post(
-                    f"{self._config.a2a_url}/signals", json=batch, headers=headers,
+                    f"{self._config.a2a_url}/signals/batch", json=batch, headers=headers,
                 )
                 resp.raise_for_status()
             except (httpx.HTTPStatusError, httpx.HTTPError) as exc:

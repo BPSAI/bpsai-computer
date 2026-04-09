@@ -163,7 +163,42 @@ class TestBatchAssembly:
         assert batch["operator"] == "mike"
         assert batch["repo"] == "my-repo"
         assert len(batch["signals"]) == 2
-        assert batch["signals"][0]["timestamp"] == "2026-03-31T00:01:00+00:00"
+        # Timestamps normalized to canonical UTC (no microseconds, Z suffix)
+        assert batch["signals"][0]["timestamp"] == "2026-03-31T00:01:00Z"
+        # Each signal has a signal_id
+        assert "signal_id" in batch["signals"][0]
+        assert "signal_id" in batch["signals"][1]
+        # signal_ids are strings and non-empty
+        assert isinstance(batch["signals"][0]["signal_id"], str)
+        assert len(batch["signals"][0]["signal_id"]) > 0
+
+    def test_signal_id_is_deterministic(self, pusher, config):
+        """Same signal content produces same signal_id."""
+        ws = pusher._workspace_root
+        ws.mkdir(parents=True)
+        lines = [_make_signal(ts="2026-03-31T00:01:00+00:00")]
+        repo = _create_repo_with_signals(ws, "my-repo", lines)
+
+        signals = pusher.read_new_signals(repo)
+        batch1 = pusher.build_batch(repo_name="my-repo", signals=signals)
+        batch2 = pusher.build_batch(repo_name="my-repo", signals=signals)
+
+        assert batch1["signals"][0]["signal_id"] == batch2["signals"][0]["signal_id"]
+
+    def test_different_signals_get_different_ids(self, pusher, config):
+        """Different signal content produces different signal_id."""
+        ws = pusher._workspace_root
+        ws.mkdir(parents=True)
+        lines = [
+            _make_signal(ts="2026-03-31T00:01:00+00:00"),
+            _make_signal(ts="2026-03-31T00:02:00+00:00"),
+        ]
+        repo = _create_repo_with_signals(ws, "my-repo", lines)
+
+        signals = pusher.read_new_signals(repo)
+        batch = pusher.build_batch(repo_name="my-repo", signals=signals)
+
+        assert batch["signals"][0]["signal_id"] != batch["signals"][1]["signal_id"]
 
     def test_scrub_credentials_in_payload(self, pusher, config):
         """Credentials in signal payloads are scrubbed before POST."""
@@ -191,7 +226,7 @@ class TestPushToA2A:
         lines = [_make_signal()]
         _create_repo_with_signals(ws, "repo-a", lines)
 
-        route = respx.post(f"{BASE}/signals").mock(
+        route = respx.post(f"{BASE}/signals/batch").mock(
             return_value=httpx.Response(200, json={"ok": True})
         )
 
@@ -202,6 +237,8 @@ class TestPushToA2A:
         assert body["operator"] == "mike"
         assert body["repo"] == "repo-a"
         assert len(body["signals"]) == 1
+        # Verify signal_id present
+        assert "signal_id" in body["signals"][0]
 
     @respx.mock
     async def test_push_updates_cursor_on_success(self, pusher, config, cursor_path):
@@ -210,7 +247,7 @@ class TestPushToA2A:
         lines = [_make_signal() for _ in range(3)]
         repo = _create_repo_with_signals(ws, "repo-a", lines)
 
-        respx.post(f"{BASE}/signals").mock(
+        respx.post(f"{BASE}/signals/batch").mock(
             return_value=httpx.Response(200, json={"ok": True})
         )
 
@@ -237,7 +274,7 @@ class TestPushToA2A:
             signals_file.write_text(signals_file.read_text() + _make_signal() + "\n")
             return httpx.Response(200, json={"ok": True})
 
-        respx.post(f"{BASE}/signals").mock(side_effect=post_and_append)
+        respx.post(f"{BASE}/signals/batch").mock(side_effect=post_and_append)
 
         await pusher.push_signals()
 
@@ -257,7 +294,7 @@ class TestPushToA2A:
         ws.mkdir(parents=True)
         _create_repo_with_signals(ws, "repo-a", [_make_signal()])
 
-        route = respx.post(f"{BASE}/signals").mock(
+        route = respx.post(f"{BASE}/signals/batch").mock(
             return_value=httpx.Response(200, json={"ok": True})
         )
 
@@ -277,7 +314,7 @@ class TestPushFailureResilience:
         ws.mkdir(parents=True)
         _create_repo_with_signals(ws, "repo-a", [_make_signal()])
 
-        respx.post(f"{BASE}/signals").mock(
+        respx.post(f"{BASE}/signals/batch").mock(
             return_value=httpx.Response(500, text="Internal Server Error")
         )
 
@@ -292,7 +329,7 @@ class TestPushFailureResilience:
         lines = [_make_signal() for _ in range(3)]
         repo = _create_repo_with_signals(ws, "repo-a", lines)
 
-        respx.post(f"{BASE}/signals").mock(
+        respx.post(f"{BASE}/signals/batch").mock(
             return_value=httpx.Response(500, text="error")
         )
 
@@ -306,7 +343,7 @@ class TestPushFailureResilience:
         ws.mkdir(parents=True)
         _create_repo_with_signals(ws, "repo-a", [_make_signal()])
 
-        respx.post(f"{BASE}/signals").mock(side_effect=httpx.ConnectError("refused"))
+        respx.post(f"{BASE}/signals/batch").mock(side_effect=httpx.ConnectError("refused"))
 
         # Should not raise
         await pusher.push_signals()
@@ -329,7 +366,7 @@ class TestPushFailureResilience:
                 return httpx.Response(200, json={"ok": True})
             return httpx.Response(500, text="error")
 
-        respx.post(f"{BASE}/signals").mock(side_effect=side_effect)
+        respx.post(f"{BASE}/signals/batch").mock(side_effect=side_effect)
 
         await pusher.push_signals()
 

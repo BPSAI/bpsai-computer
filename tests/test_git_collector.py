@@ -206,7 +206,7 @@ class TestPushToA2A:
             "open_pr_branches": 1,
         }
         with patch.object(collector, "collect_summary", return_value=summary):
-            route = respx.post(f"{BASE}/signals").mock(
+            route = respx.post(f"{BASE}/signals/batch").mock(
                 return_value=httpx.Response(200, json={"ok": True})
             )
             await collector.push_summaries()
@@ -220,6 +220,12 @@ class TestPushToA2A:
         assert sig["signal_type"] == "git_summary"
         assert sig["severity"] == "info"
         assert sig["payload"]["commit_count"] == 2
+        # signal_id present and non-empty
+        assert isinstance(sig["signal_id"], str)
+        assert len(sig["signal_id"]) > 0
+        # Timestamp in canonical UTC format (no microseconds, Z suffix)
+        assert sig["timestamp"].endswith("Z")
+        assert "+" not in sig["timestamp"]
 
     @respx.mock
     async def test_auth_headers_sent_when_token_manager_set(self, config, cursor_path):
@@ -236,7 +242,7 @@ class TestPushToA2A:
 
         summary = {"head_sha": "abc", "commit_count": 1, "authors": [], "branch": "main", "ahead": 0, "behind": 0, "open_pr_branches": 0}
         with patch.object(collector, "collect_summary", return_value=summary):
-            route = respx.post(f"{BASE}/signals").mock(
+            route = respx.post(f"{BASE}/signals/batch").mock(
                 return_value=httpx.Response(200, json={"ok": True})
             )
             await collector.push_summaries()
@@ -253,7 +259,7 @@ class TestPushToA2A:
 
         summary = {"head_sha": "newsha", "commit_count": 1, "authors": [], "branch": "main", "ahead": 0, "behind": 0, "open_pr_branches": 0}
         with patch.object(collector, "collect_summary", return_value=summary):
-            respx.post(f"{BASE}/signals").mock(
+            respx.post(f"{BASE}/signals/batch").mock(
                 return_value=httpx.Response(200, json={"ok": True})
             )
             await collector.push_summaries()
@@ -267,7 +273,7 @@ class TestPushToA2A:
         _make_git_repo(ws, "repo-a")
 
         with patch.object(collector, "collect_summary", return_value=None):
-            route = respx.post(f"{BASE}/signals").mock(
+            route = respx.post(f"{BASE}/signals/batch").mock(
                 return_value=httpx.Response(200, json={"ok": True})
             )
             await collector.push_summaries()
@@ -286,7 +292,7 @@ class TestPushResilience:
 
         summary = {"head_sha": "sha1", "commit_count": 1, "authors": [], "branch": "main", "ahead": 0, "behind": 0, "open_pr_branches": 0}
         with patch.object(collector, "collect_summary", return_value=summary):
-            respx.post(f"{BASE}/signals").mock(
+            respx.post(f"{BASE}/signals/batch").mock(
                 return_value=httpx.Response(500, text="error")
             )
             await collector.push_summaries()  # should not raise
@@ -299,7 +305,7 @@ class TestPushResilience:
 
         summary = {"head_sha": "sha1", "commit_count": 1, "authors": [], "branch": "main", "ahead": 0, "behind": 0, "open_pr_branches": 0}
         with patch.object(collector, "collect_summary", return_value=summary):
-            respx.post(f"{BASE}/signals").mock(
+            respx.post(f"{BASE}/signals/batch").mock(
                 return_value=httpx.Response(500, text="error")
             )
             await collector.push_summaries()
@@ -314,5 +320,5 @@ class TestPushResilience:
 
         summary = {"head_sha": "sha1", "commit_count": 1, "authors": [], "branch": "main", "ahead": 0, "behind": 0, "open_pr_branches": 0}
         with patch.object(collector, "collect_summary", return_value=summary):
-            respx.post(f"{BASE}/signals").mock(side_effect=httpx.ConnectError("refused"))
+            respx.post(f"{BASE}/signals/batch").mock(side_effect=httpx.ConnectError("refused"))
             await collector.push_summaries()  # should not raise
