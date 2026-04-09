@@ -1,6 +1,6 @@
 # Execution Priorities — Post-Unified-Auth Assessment
 
-> **Updated:** 2026-04-08 (Phase B complete, agent-core v0.3.0, extractions done, CLI v2.21.5)
+> **Updated:** 2026-04-09 (Phase A nearly complete, MLP shipped, agent-core v0.4.0, CLI v2.21.5+)
 > **Authors:** Mike Doggett + David Wiens + Computer
 > **Purpose:** Priority-ranked execution plan for next sprint planning
 > **Principle:** Ship the intelligence layer first. Every sprint that improves planning, retrieval, and self-awareness makes every subsequent sprint faster. Features ship faster through a smarter system than through a dumber one shipping features.
@@ -66,11 +66,24 @@ The framework has served as the proving ground for orchestration machinery (SENS
 | Item | Repo | Effort | Status | Notes |
 |------|------|--------|--------|-------|
 | Org setup | bpsai-support | ~5cx | COMPLETE | BPS org created, Mike/David/Kevin added |
-| CD3: Daemon JWT | bpsai-computer | ~15cx | In Progress — PR open | Daemon authenticates with operator-token |
-| Metis fleet visibility | bpsai-computer + A2A + bot | ~50cx | In Progress — PR open | Daemon signal push, /signals endpoint, Metis reader |
+| CD3: Daemon JWT | bpsai-computer | ~15cx | COMPLETE — merged Apr 8 | Daemon authenticates with operator-token |
+| Metis fleet visibility | bpsai-computer + A2A + bot | ~50cx | COMPLETE — merged Apr 8 | SignalPusher + /signals endpoint |
+| Daemon workspace configs | bpsai-computer | ~10cx | COMPLETE | Per-workspace isolation, PR #4 merged Apr 9 |
+| agent-core v0.4.0 auth extraction | bpsai-agents | ~8cx | COMPLETE | TokenManager + LicenseDiscovery extracted from computer to shared package, on PyPI |
 | CC dispatch UI | bpsai-command-center | ~20cx | Ready | Trigger dispatches from Command Center UI |
 
-**Milestone:** CC → daemon → execute → result loop working. First taste of working from Command Center.
+**Milestone:** CD3 + fleet visibility + workspace configs are done. CC dispatch UI remains. First taste of working from Command Center.
+
+### Metis Live Pipeline (MLP) — COMPLETE
+
+| Item | Repo | Effort | Status | Notes |
+|------|------|--------|--------|-------|
+| MLP.0: Auth extraction | bpsai-agents | 8cx | COMPLETE | agent-core v0.4.0 on PyPI |
+| MLP.1-3: Briefing pipeline | paircoder_bot | 30cx | COMPLETE | Generate + push briefings to A2A, JWT auth, local persistence |
+| MLP.4-6: Lounge live activation | agentlounge.ai | 24cx | COMPLETE | AgentHeartbeat, card view status dots, detail panel feed |
+| MLP.7: Computer BriefingReader | bpsai-computer | 8cx | COMPLETE | Already existed (Mike shipped it) |
+
+**Milestone:** Metis pushes live data through A2A. Lounge displays it. Computer reads it on startup.
 
 ### Phase B: Clean the Foundation
 
@@ -112,6 +125,29 @@ The framework has served as the proving ground for orchestration machinery (SENS
 | Metis dedup fix | David | Shipped | Cycle loop fixed, git identity, no exclusions |
 | Agent mythology renaming | David | Deferred | Cross-repo rename, needs Mike alignment |
 
+### What Else Shipped (Apr 8-9)
+
+#### CLI v2.21.5+ (dev branch)
+- Full mythology agent rename: nayru, laverna, bellona, vaivora, divona
+- Vaivora wired as third review agent (cross-module contracts)
+- Review pipeline fixed (engage_review, intent recognition, skill wiring)
+- Laverna upgraded to Opus
+- Engage targets dev branch when dev exists
+- 12,844+ tests
+
+#### Iris
+- Phase 3b + 3c on PR #22 (review findings posted, Kevin remediating)
+- 3,863 tests
+- Phase 4 (video production) next
+
+#### Lounge
+- Agent data reseeded with current actuals (Apr 9)
+- Live channel data wired (MLP.4-6)
+- 351 tests
+
+#### Amunet
+- S4 complete, 704 tests
+
 ### Tier 4: Features + Infrastructure (post-migration)
 
 | Item | Repo | Effort | Status | Notes |
@@ -133,11 +169,20 @@ The framework has served as the proving ground for orchestration machinery (SENS
 
 ```
 PHASE A — Wire the Pipes:
-├── Org setup (BPS org in Function App DB)
-├── CD3: Daemon JWT (auth for daemon <-> A2A)
-├── Metis fleet visibility (50cx) — daemon signal push to A2A
+├── Org setup (BPS org in Function App DB) ✅
+├── CD3: Daemon JWT (auth for daemon <-> A2A) ✅
+├── Metis fleet visibility (50cx) — SignalPusher + /signals endpoint ✅
+├── Daemon workspace configs — per-workspace isolation ✅
+├── agent-core v0.4.0 auth extraction — TokenManager + LicenseDiscovery on PyPI ✅
 ├── CC dispatch UI — trigger dispatches from Command Center
-│   MILESTONE: CC → daemon → execute → result loop working
+│   MILESTONE: CC dispatch UI remains. All other Phase A items complete.
+│
+MLP — Metis Live Pipeline: COMPLETE ✅
+├── MLP.0: Auth extraction — agent-core v0.4.0 on PyPI ✅
+├── MLP.1-3: Briefing pipeline — generate + push to A2A ✅
+├── MLP.4-6: Lounge live activation — heartbeat, status dots, feed ✅
+├── MLP.7: Computer BriefingReader — already existed ✅
+│   MILESTONE: Metis → A2A → Lounge live. Computer reads on startup.
 │
 PHASE B — Clean the Foundation: COMPLETE ✅
 ├── AF2: Agent Foundry Phase 2 — core v0.3.0 + enforce v0.1.0 + lounge v0.1.0 on PyPI ✅
@@ -199,7 +244,8 @@ All 4 candidates now have production code:
 | **TH** (Telemetry Integrity) | Complete | -- |
 | **Briefing** (Cross-Session) | Complete | -- |
 | **Unified Auth** | Complete | -- |
-| **Phase A** (Wire the Pipes) | In Progress | ~90cx |
+| **Phase A** (Wire the Pipes) | Nearly Complete | ~20cx (CC dispatch UI) |
+| **MLP** (Metis Live Pipeline) | Complete | -- |
 | **Phase B** (Clean Foundation) | Complete | -- |
 | **Phase C** (Computer Orchestration) | After B | ~150cx |
 | **Tier 4** (Features) | Backlogged | ~700cx+ |

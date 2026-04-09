@@ -1,6 +1,6 @@
 # Portfolio Status — Machine-readable, always current
 # Query: bpsai-pair status --portfolio (future), or read directly
-# Updated: 2026-04-08 (v2.21.5 released, Iris S13 merged, Phase B extraction complete, agent-core v0.3.0)
+# Updated: 2026-04-09 (Iris S14, agent-core v0.4.0, CD3 merged, Lounge reseeded, Amunet S4)
 # NOTE: For priority decisions, also read execution-priorities.md
 
 repos:
@@ -10,7 +10,7 @@ repos:
     sprint_status: complete
     sprint_theme: "Branch Enforcement + Intent Merge Strategy"
     version: 2.21.5
-    tests: 12500+
+    tests: 12844
     branch: main
     dev_synced: true
     v2.21.4_shipped:
@@ -32,7 +32,7 @@ repos:
       - "Pre-PR security-auditor, size-scaled cross-module reviewer"
       - "PermissionDenied hook, dynamic base branch, JSONL injection fix"
     issues_closed: [131, 133, 134, 141, 143]
-    next: "CLI-IMS (intent merge strategy) and CLI-EB (dep split) are remaining backlogs. No urgent work."
+    next: "Mythology rename on dev (nayru, laverna, bellona, vaivora, divona). Vaivora as third review agent. Engage targets dev. Next release pending."
 
   paircoder_api:
     shortcode: API
@@ -56,7 +56,7 @@ repos:
     latest_sprint: G2
     sprint_status: complete
     sprint_theme: "Self-Reasoning + Autonomous Communication (Bot track)"
-    tests: 3056
+    tests: 3082
     branch: main
     dev_synced: true  # PR #3 merged 2026-03-27, P1 fixes applied
     editable_install: true  # 2026-03-29
@@ -75,17 +75,18 @@ repos:
       - "Git remote identity: projects identified by Owner/Repo, not local YAML keys"
       - "Cross-cycle finding dedup: finding_keys stored in CycleEntry, repeats suppressed"
       - "Standup truncation fix: long hypothesis titles in stale section"
-    next: "Verify Metis produces new findings after dedup fix. S35 planning."
+    next: "MLP pipeline live. Metis pushes briefings to A2A on each heartbeat cycle."
 
   bpsai-framework:
     shortcode: FW
     latest_sprint: LS0
     sprint_status: complete
     sprint_theme: "Orchestration loop smoke test + design docs"
-    tests: 1708
+    tests: 1146
     branch: main
     dev_synced: true
     editable_install: true  # 2026-03-29
+    next: "Phase C extraction (12 tasks, ~115cx) — execution layer to bpsai-computer"
     g2_done: [G2.7, G2.D3]
     g3_done: [G3.P1, G3.P2, G3.P3]
     th_done: [TH1.1, TH1.2, TH2.1, TH2.2, TH3.1, TH3.2]
@@ -185,21 +186,22 @@ repos:
     latest_sprint: AF2
     sprint_status: complete
     sprint_theme: "Agent Foundry Phase 2 — enforce + lounge contracts"
-    tests: 376
+    tests: 209  # agent-core
     branch: main
     published: true
     packages:
-      agent-core: "v0.3.0 — BaseAgent, multi-plan, clustering, synthesis, hook protocols, enforcement ABCs"
+      agent-core: "v0.4.0 — BaseAgent, multi-plan, clustering, synthesis, hook protocols, enforcement ABCs, TokenManager, LicenseDiscovery"
       agent-enforce: "v0.1.0 — EnforcementGate, pipelines, signal validation, evidence mechanics, hypothesis gates"
       agent-lounge: "v0.1.0 — HypothesisLifecycle, channels, beliefs, evidence mapper, briefings, standups"
+    af2_shipped: "agent-enforce v0.1.0 + agent-lounge v0.1.0 on PyPI (2026-04-08), agent-core v0.4.0 with TokenManager + LicenseDiscovery extracted from computer"
     next: "Domain-specific rule and channel implementations in consuming agents"
 
   bpsai-computer:
     shortcode: CMP
-    latest_sprint: CD1
+    latest_sprint: CD3
     sprint_status: complete
-    sprint_theme: "Computer₀ dispatch daemon"
-    tests: 144
+    sprint_theme: "Fleet viz + daemon workspace configs + auth re-exports"
+    tests: 265
     branch: main
     features:
       - "A2A polling with operator + workspace scoping"
@@ -210,7 +212,9 @@ repos:
       - "Stdout streaming with batched A2A posting"
       - "Session lifecycle messages (started, complete, failed)"
       - "Resume command handler"
-    next: "CD3 planning + signal push to A2A (blocked on UA sprint)"
+      - "Daemon workspace configs merged"
+      - "Auth re-exports from agent-core v0.4.0"
+    next: "Phase C: Navigator orchestration, backlog parsing, dispatch routing (~150cx)"
 
   bpsai-support:
     shortcode: SUP
@@ -231,10 +235,10 @@ repos:
 
   bpsai-iris:
     shortcode: IRIS
-    latest_sprint: S13
-    sprint_status: complete
-    sprint_theme: "Instructional Content Pipeline (Phase 3) -- SHIPPED"
-    tests: 3787
+    latest_sprint: S14
+    sprint_status: in_progress
+    sprint_theme: "Phase 3b+3c pipeline observations + content quality"
+    tests: 3863
     branch: main
     stack: "Python + Playwright + FFmpeg + ElevenLabs"
     owner: Kevin
@@ -272,66 +276,70 @@ repos:
       - "Diagnostic iteration loop: auto-fix RUSHED_VISUAL, EMPTY_VISUAL, MISSING_NARRATION"
       - "instruct skill added to AgentCard"
       - "_scene_counters.py shared between diagnostics and instruct"
-    next: "Phase 3b: produce 4 real videos for YouTube. Phase 3 unblocks iris instruct automation."
+    next: "PR #22 review remediation, then Phase 4 (video production)"
 
   agentlounge.ai:
     shortcode: LOUNGE
     latest_sprint: S1
     sprint_status: complete
     sprint_theme: "Agent Directory + Standup Portal"
-    tests: 318
+    tests: 351
     branch: main
     stack: "Next.js 16, React Three Fiber, TypeScript, Tailwind CSS v4"
     navigator_dispatched: true  # 2026-03-27 — first E2E spawn test
     mb1_4_done: true  # briefing panel
     heimdall_presence: true  # platform sentinel on Lounge
     toroidal_heptagram: true  # 2026-03-30 — sacred geometry layout shipped
-    latest_update: "Toroidal Heptagram layout — 7 directional pairs, {7/2}+{7/3} star patterns, binary star center, Fibonacci spiral"
-    next: "Observation backlog — autonomous sprint monitoring gaps from engage test"
+    latest_update: "Agent data reseeded Apr 9. Live channel data wired (MLP.4-6)."
+    next: "Live data flows once bot heartbeat pushes to A2A"
 
   bpsai-computer:
     shortcode: COMP
-    latest_sprint: CD2
+    latest_sprint: CD3
     sprint_status: complete
-    sprint_theme: "Session Streaming + Resume"
-    tests: 92
+    sprint_theme: "Fleet viz + daemon workspace configs + auth re-exports"
+    tests: 265
     branch: main
     stack: "Python 3.11+, httpx, PyYAML"
     created: "2026-03-30 (Mike)"
     description: "Computer₀ dispatch daemon. Bridges Command Center (cloud) to local Claude Code execution."
     cd1_complete: true  # daemon scaffold, A2A polling, dispatch execution, integration tests
     cd2_complete: true  # stdout streaming, session lifecycle messages, resume command
+    cd3_complete: true  # fleet viz, daemon workspace configs, auth re-exports
     cd2_shipped:
       - "CD2.1: Stream stdout incrementally with batched A2A posting"
       - "CD2.2: Session lifecycle messages (started, complete, failed)"
       - "CD2.3: Resume command handler (claude --resume session_id)"
-    next: "CD3 planning"
+    cd3_shipped:
+      - "Daemon workspace configs merged"
+      - "Auth re-exports from agent-core v0.4.0"
+      - "Fleet viz complete"
+    next: "Phase C: Navigator orchestration, backlog parsing, dispatch routing (~150cx)"
 
   bpsai-agents:
     shortcode: AF
-    latest_sprint: AF1
+    latest_sprint: AF2
     sprint_status: complete
-    sprint_theme: "Agent Foundry — extract core abstractions (Azure SDK pattern)"
-    tests: 90
+    sprint_theme: "Agent Foundry Phase 2 — enforce + lounge contracts"
+    tests: 209  # agent-core
     branch: main
     stack: "Python 3.11+, pytest"
     created: "2026-03-30 (Mike)"
     description: "Monorepo workspace for agent packages: agent-core, agent-lounge, agent-enforce."
     packages:
-      agent-core: "v0.3.0 -- BaseAgent, multi-plan, clustering, synthesis, hook protocols, enforcement ABCs, observations, transports"
+      agent-core: "v0.4.0 -- BaseAgent, multi-plan, clustering, synthesis, hook protocols, enforcement ABCs, observations, transports, TokenManager, LicenseDiscovery"
       agent-enforce: "v0.1.0 -- EnforcementGate, pipelines, signal validation, evidence mechanics, hypothesis gates"
       agent-lounge: "v0.1.0 -- HypothesisLifecycle, channels, beliefs, evidence mapper, briefings, standups"
-    tests: 376
     af1_complete: true
     af2_complete: true
     pre_af2_complete: true
     pre_af2_shipped: "Observation type, Transport/AsyncTransport protocols, FileTransport, emit()/aemit() on BaseAgent"
-    af2_shipped: "agent-enforce v0.1.0 + agent-lounge v0.1.0 on PyPI (2026-04-08)"
+    af2_shipped: "agent-enforce v0.1.0 + agent-lounge v0.1.0 on PyPI (2026-04-08), agent-core v0.4.0 with TokenManager + LicenseDiscovery extracted from computer"
     next: "Domain-specific rule and channel implementations in consuming agents"
 
   bpsai-amunet:
     shortcode: AMU
-    latest_sprint: AMU-S4
+    latest_sprint: S4
     sprint_status: complete
     sprint_theme: "Full workspace validation"
     tests: 704
@@ -411,7 +419,7 @@ patent:
     - id: 1
       name: "Deterministic Enforcement Pipeline"
       status: production
-      evidence: "1,684 FW + 11,308 CLI tests"
+      evidence: "1,146 FW + 12,844 CLI tests"
     - id: 2
       name: "Agent Lounge / Epistemic Exchange"
       status: design_plus_partial
@@ -484,18 +492,18 @@ design_decisions:
     - "Command Center: progressive build (web -> tablet -> stations -> Vision Pro)"
     - "Lounge intelligence deploys in A2A, extract later (transport/intelligence separation)"
 
-# Test counts (2026-04-07 afternoon)
+# Test counts (2026-04-09)
 test_summary:
-  cli: 12500+  # v2.21.5
-  framework: 1246  # post-extraction
-  bot: 2971  # post-extraction, agent-core v0.3.0  # after Metis fixes
-  iris: 3787  # S13 Phase 3 merged  # S13 adds ~190 tests
-  lounge: 318
+  cli: 12844  # v2.21.5
+  framework: 1146  # post-Phase B extraction
+  bot: 3082  # MLP pipeline
+  iris: 3863  # S14 Phase 3b+3c
+  lounge: 351  # reseeded + live channel data
   a2a: 200+
-  agents: 199  # agent-core v0.3.0
+  agents: 209  # agent-core v0.4.0
   brightdata_demo: 53
-  computer: 164  # hooks migrated
-  amunet: 704
+  computer: 265  # CD3 merged
+  amunet: 704  # S4 complete
   command_center: 200+
   support: 1651
   total: 24500+
@@ -614,6 +622,7 @@ blockers:
     owner: Mike
     mythology: "Lithuanian goddess of perception -- sees infrastructure implications"
     extracted_from: bpsai-agents/agent-core
+    note: "Embedded in CLI review pipeline. Standalone A2A agent in development."
     next: "Deploy to A2A fleet, wire into Command Center agent grid"
 
 # Phase B extraction status (2026-04-08)
@@ -624,4 +633,4 @@ extraction_status:
   portfolio_docs_migration: complete  # status.yaml, decisions, hypotheses now in bpsai-computer
   dead_code_cleanup: complete  # dispatch_types, enforcement_config, content_router removed
   framework_state: "Clean shared library -- orchestration, enforcement, cognitive types, idea lifecycle"
-  agent_core_version: "v0.3.0 (hook protocols, sense/learn events, multi-plan)"
+  agent_core_version: "v0.4.0 (hook protocols, sense/learn events, multi-plan, TokenManager, LicenseDiscovery)"
