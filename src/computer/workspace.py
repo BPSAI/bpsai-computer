@@ -34,18 +34,40 @@ def remove_pid_file(pid_path: Path) -> None:
 
 
 def check_existing_pid(pid_path: Path) -> int | None:
-    """Return the PID stored in *pid_path*, or ``None`` if missing/invalid."""
+    """Return the PID stored in *pid_path* if the process is alive.
+
+    Returns ``None`` (and deletes the stale PID file) when the process
+    is no longer running.
+    """
     if not pid_path.exists():
         return None
     try:
-        return int(pid_path.read_text().strip())
+        pid = int(pid_path.read_text().strip())
     except (ValueError, OSError):
         return None
+
+    # Check if process is still alive
+    try:
+        os.kill(pid, 0)
+    except OSError:
+        # Process is dead — clean up stale PID file
+        try:
+            pid_path.unlink()
+        except FileNotFoundError:
+            pass
+        return None
+    return pid
+
+
+import re as _re
+
+_SAFE_LOG_NAME_RE = _re.compile(r"[^a-zA-Z0-9_-]")
 
 
 def configure_workspace_logging(workspace: str) -> None:
     """Set the root logger format to include ``[{workspace}]`` prefix."""
-    fmt = f"%(asctime)s [{workspace}] %(levelname)s %(name)s: %(message)s"
+    safe_name = _SAFE_LOG_NAME_RE.sub("_", workspace)
+    fmt = f"%(asctime)s [{safe_name}] %(levelname)s %(name)s: %(message)s"
     root = logging.getLogger()
     for handler in root.handlers:
         handler.setFormatter(logging.Formatter(fmt))

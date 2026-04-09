@@ -3,10 +3,22 @@
 from __future__ import annotations
 
 import os
+import re
 from dataclasses import dataclass, field, fields
 from pathlib import Path
 
 import yaml
+
+_WORKSPACE_NAME_RE = re.compile(r"^[a-zA-Z0-9_-]+$")
+
+
+def validate_workspace_name(name: str) -> None:
+    """Raise ValueError if *name* is not a safe workspace identifier."""
+    if not name or not _WORKSPACE_NAME_RE.match(name):
+        raise ValueError(
+            f"Invalid workspace name {name!r}. "
+            "Must match ^[a-zA-Z0-9_-]+$ (no paths or special chars)."
+        )
 
 
 def _default_workspace_root() -> str:
@@ -71,13 +83,16 @@ def load_config(
 
     When *workspace* is given and *config_path* is not, resolves the config
     file as ``~/.bpsai-computer/{workspace}.yaml`` first, falling back to
-    ``~/.bpsai-computer/config.yaml``.  If neither file exists, raises
-    ``FileNotFoundError`` with a helpful message.
+    ``~/.bpsai-computer/config.yaml``.  If no file exists, proceeds with
+    empty file_values and relies on CLI overrides.
 
-    Missing file is OK if overrides supply required fields (only when no
-    workspace-based resolution is attempted).
+    Raises ``TypeError`` if required fields (operator, workspace) are still
+    missing after merging file + overrides.
     """
     overrides = overrides or {}
+
+    if workspace is not None:
+        validate_workspace_name(workspace)
 
     if config_path is not None:
         # Explicit path — skip workspace resolution
@@ -85,10 +100,6 @@ def load_config(
     elif workspace is not None:
         config_dir = _default_config_dir()
         resolved = _resolve_config_path(config_dir, workspace)
-        if resolved is None:
-            raise FileNotFoundError(
-                f"No config found. Create ~/.bpsai-computer/{workspace}.yaml"
-            )
     else:
         config_dir = _default_config_dir()
         resolved = _resolve_config_path(config_dir, workspace=None)

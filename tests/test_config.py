@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from computer.config import DaemonConfig, load_config
+from computer.config import DaemonConfig, load_config, validate_workspace_name
 
 
 class TestDaemonConfig:
@@ -165,12 +165,24 @@ class TestWorkspaceConfigResolution:
         assert cfg.operator == "mike"
         assert cfg.poll_interval == 20
 
-    def test_workspace_missing_config_error(self, tmp_path: Path, monkeypatch):
-        """When neither workspace.yaml nor config.yaml exist, raise clear error."""
+    def test_workspace_no_config_file_uses_overrides(self, tmp_path: Path, monkeypatch):
+        """When neither workspace.yaml nor config.yaml exist, overrides fill in."""
         config_dir = tmp_path / ".bpsai-computer"
         config_dir.mkdir()
         monkeypatch.setattr("computer.config._default_config_dir", lambda: config_dir)
-        with pytest.raises(FileNotFoundError, match="No config found"):
+        cfg = load_config(
+            workspace="staging",
+            overrides={"operator": "mike", "workspace": "staging"},
+        )
+        assert cfg.operator == "mike"
+        assert cfg.workspace == "staging"
+
+    def test_workspace_no_config_no_overrides_raises(self, tmp_path: Path, monkeypatch):
+        """When no config file and overrides don't supply required fields, raise."""
+        config_dir = tmp_path / ".bpsai-computer"
+        config_dir.mkdir()
+        monkeypatch.setattr("computer.config._default_config_dir", lambda: config_dir)
+        with pytest.raises((TypeError, ValueError)):
             load_config(workspace="staging")
 
     def test_no_workspace_uses_default_config(self, tmp_path: Path, monkeypatch):
@@ -212,3 +224,55 @@ class TestWorkspaceConfigResolution:
         cfg = load_config(config_path=config_file, workspace="ignored")
         assert cfg.operator == "custom"
         assert cfg.workspace == "custom-ws"
+
+    def test_cli_only_no_config_file_all_flags(self, tmp_path: Path, monkeypatch):
+        """All required fields via overrides, no config file at all."""
+        config_dir = tmp_path / ".bpsai-computer"
+        config_dir.mkdir()
+        monkeypatch.setattr("computer.config._default_config_dir", lambda: config_dir)
+        cfg = load_config(
+            workspace="myws",
+            overrides={
+                "operator": "ops",
+                "workspace": "myws",
+                "poll_interval": 7,
+            },
+        )
+        assert cfg.operator == "ops"
+        assert cfg.workspace == "myws"
+        assert cfg.poll_interval == 7
+
+
+class TestWorkspaceNameValidation:
+    """Test path traversal and invalid workspace name rejection."""
+
+    def test_valid_workspace_names(self):
+        for name in ["bpsai", "my-workspace", "ws_01", "A-Z_test"]:
+            validate_workspace_name(name)  # should not raise
+
+    def test_path_traversal_rejected(self):
+        with pytest.raises(ValueError, match="Invalid workspace name"):
+            validate_workspace_name("../etc/passwd")
+
+    def test_slash_rejected(self):
+        with pytest.raises(ValueError, match="Invalid workspace name"):
+            validate_workspace_name("foo/bar")
+
+    def test_backslash_rejected(self):
+        with pytest.raises(ValueError, match="Invalid workspace name"):
+            validate_workspace_name("foo\\bar")
+
+    def test_empty_string_rejected(self):
+        with pytest.raises(ValueError, match="Invalid workspace name"):
+            validate_workspace_name("")
+
+    def test_dot_dot_rejected(self):
+        with pytest.raises(ValueError, match="Invalid workspace name"):
+            validate_workspace_name("..")
+
+    def test_load_config_rejects_traversal(self, tmp_path: Path, monkeypatch):
+        config_dir = tmp_path / ".bpsai-computer"
+        config_dir.mkdir()
+        monkeypatch.setattr("computer.config._default_config_dir", lambda: config_dir)
+        with pytest.raises(ValueError, match="Invalid workspace name"):
+            load_config(workspace="../etc/passwd")

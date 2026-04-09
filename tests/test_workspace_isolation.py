@@ -158,12 +158,28 @@ class TestWorkspacePIDFile:
         assert check_existing_pid(pid_path) is None
 
     def test_check_pid_file_returns_pid_when_exists(self, tmp_path):
-        """check_existing_pid returns the PID stored in the file."""
+        """check_existing_pid returns the PID for a live process."""
+        import os
         from computer.workspace import check_existing_pid
 
         pid_path = tmp_path / "test.pid"
-        pid_path.write_text("12345")
-        assert check_existing_pid(pid_path) == 12345
+        pid_path.write_text(str(os.getpid()))  # current process is alive
+        assert check_existing_pid(pid_path) == os.getpid()
+
+    def test_check_pid_file_returns_none_for_dead_process(self, tmp_path):
+        """check_existing_pid returns None and deletes stale PID file."""
+        from unittest.mock import patch
+        from computer.workspace import check_existing_pid
+
+        pid_path = tmp_path / "test.pid"
+        pid_path.write_text("99999999")  # very unlikely to be alive
+
+        # Mock os.kill to raise OSError (process not found)
+        with patch("computer.workspace.os.kill", side_effect=OSError):
+            result = check_existing_pid(pid_path)
+
+        assert result is None
+        assert not pid_path.exists(), "Stale PID file should be deleted"
 
 
 class TestWorkspaceLogPrefix:
@@ -184,22 +200,19 @@ class TestWorkspaceLogPrefix:
         """configure_workspace_logging sets a filter/formatter with workspace tag."""
         from computer.workspace import configure_workspace_logging
 
-        logger = logging.getLogger("test_ws_prefix")
-        logger.handlers.clear()
+        root = logging.getLogger()
+        root.handlers.clear()
         handler = logging.StreamHandler()
-        logger.addHandler(handler)
+        root.addHandler(handler)
 
         configure_workspace_logging("bpsai")
 
-        # Check that root logger's formatter includes workspace
-        root = logging.getLogger()
+        found = False
         for h in root.handlers:
-            if hasattr(h, 'formatter') and h.formatter:
-                fmt = h.formatter._fmt
-                if "[bpsai]" in fmt:
-                    break
-        # Alternative: check that the function runs without error
-        # (formatter verification is implementation-dependent)
+            if h.formatter and "[bpsai]" in h.formatter._fmt:
+                found = True
+                break
+        assert found, "Root logger formatter should contain [bpsai] prefix"
 
 
 class TestTwoConfigsLoadedIndependently:

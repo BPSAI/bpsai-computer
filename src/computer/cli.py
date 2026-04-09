@@ -8,7 +8,7 @@ import signal
 import sys
 from pathlib import Path
 
-from computer.config import load_config
+from computer.config import load_config, validate_workspace_name
 from computer.daemon import Daemon
 
 
@@ -35,6 +35,14 @@ def main(argv: list[str] | None = None) -> None:
     args = parse_args(argv)
 
     if args.command == "daemon":
+        # Validate workspace name early (before any file path use)
+        if args.workspace is not None:
+            try:
+                validate_workspace_name(args.workspace)
+            except ValueError as exc:
+                print(f"error: {exc}", file=sys.stderr)
+                sys.exit(1)
+
         config_path = Path(args.config) if args.config else None
         overrides = {
             "operator": args.operator,
@@ -44,11 +52,24 @@ def main(argv: list[str] | None = None) -> None:
             "poll_interval": args.poll_interval,
             "process_timeout": args.process_timeout,
         }
-        cfg = load_config(
-            config_path=config_path,
-            overrides=overrides,
-            workspace=args.workspace,
-        )
+        try:
+            cfg = load_config(
+                config_path=config_path,
+                overrides=overrides,
+                workspace=args.workspace,
+            )
+        except (TypeError, ValueError) as exc:
+            print(f"error: {exc}", file=sys.stderr)
+            sys.exit(1)
+
+        # Early validation: required fields must be set
+        if not getattr(cfg, "operator", None):
+            print("error: --operator is required (via flag or config file)", file=sys.stderr)
+            sys.exit(1)
+        if not getattr(cfg, "workspace", None):
+            print("error: --workspace is required (via flag or config file)", file=sys.stderr)
+            sys.exit(1)
+
         daemon = Daemon(cfg)
 
         def _handle_signal(*_):
