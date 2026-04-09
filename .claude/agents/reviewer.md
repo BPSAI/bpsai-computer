@@ -4,6 +4,7 @@ display_name: Nayru
 description: Code review specialist. Use proactively after code changes to review for quality, correctness, and best practices. Operates in read-only mode - provides feedback but does not make changes.
 tools: Read, Grep, Glob, Bash
 model: opus
+memory: project
 permissionMode: plan
 skills:
   - reviewing-code
