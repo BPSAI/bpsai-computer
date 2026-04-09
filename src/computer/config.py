@@ -38,25 +38,65 @@ class DaemonConfig:
         self.stream_buffer_limit = int(self.stream_buffer_limit)
 
 
-def _default_config_path() -> Path:
-    return Path.home() / ".bpsai-computer" / "config.yaml"
+def _default_config_dir() -> Path:
+    return Path.home() / ".bpsai-computer"
+
+
+def _resolve_config_path(
+    config_dir: Path,
+    workspace: str | None,
+) -> Path | None:
+    """Resolve config file path based on workspace name.
+
+    When workspace provided: try {workspace}.yaml first, then config.yaml.
+    When no workspace: try config.yaml only.
+    Returns None if no config file found.
+    """
+    if workspace:
+        ws_path = config_dir / f"{workspace}.yaml"
+        if ws_path.exists():
+            return ws_path
+    default_path = config_dir / "config.yaml"
+    if default_path.exists():
+        return default_path
+    return None
 
 
 def load_config(
     config_path: Path | None = None,
     overrides: dict | None = None,
+    workspace: str | None = None,
 ) -> DaemonConfig:
     """Load config from YAML file, then apply CLI overrides.
 
-    Missing file is OK if overrides supply required fields.
+    When *workspace* is given and *config_path* is not, resolves the config
+    file as ``~/.bpsai-computer/{workspace}.yaml`` first, falling back to
+    ``~/.bpsai-computer/config.yaml``.  If neither file exists, raises
+    ``FileNotFoundError`` with a helpful message.
+
+    Missing file is OK if overrides supply required fields (only when no
+    workspace-based resolution is attempted).
     """
-    config_path = config_path or _default_config_path()
     overrides = overrides or {}
 
-    # Load from YAML if it exists
+    if config_path is not None:
+        # Explicit path — skip workspace resolution
+        resolved = config_path if config_path.exists() else None
+    elif workspace is not None:
+        config_dir = _default_config_dir()
+        resolved = _resolve_config_path(config_dir, workspace)
+        if resolved is None:
+            raise FileNotFoundError(
+                f"No config found. Create ~/.bpsai-computer/{workspace}.yaml"
+            )
+    else:
+        config_dir = _default_config_dir()
+        resolved = _resolve_config_path(config_dir, workspace=None)
+
+    # Load from YAML if resolved
     file_values: dict = {}
-    if config_path.exists():
-        with open(config_path) as f:
+    if resolved is not None and resolved.exists():
+        with open(resolved) as f:
             file_values = yaml.safe_load(f) or {}
 
     # CLI overrides win (skip None values — they mean "not supplied")

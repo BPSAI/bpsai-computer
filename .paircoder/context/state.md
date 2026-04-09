@@ -1,15 +1,38 @@
 # Current State
 
-> Last updated: 2026-04-07
+> Last updated: 2026-04-08
 
-## Status: CD3 Sprint In Progress
+## Status: DWC Sprint In Progress
 
 ## Active Plan
 
-**Plan:** plan-sprint-3-engage
-**Current Sprint:** CD3 — Daemon JWT + Operator Identity
+**Plan:** plan-sprint-0-engage
+**Current Sprint:** DWC — Per-workspace Daemon Configs
 
 ## What Was Just Done
+
+- **DWC.2 done** (2026-04-08)
+
+- **DWC.2 COMPLETE** — Concurrent daemon isolation (bpsai-computer)
+  - ✓ Cursor files scoped by workspace: `~/.bpsai-computer/{workspace}/signal_cursors.json`
+  - ✓ Same for git_cursors.json and ci_cursors.json
+  - ✓ PID file per workspace: `~/.bpsai-computer/{workspace}.pid` with write/read/remove helpers
+  - ✓ `configure_workspace_logging()` prefixes log messages with `[{workspace}]`
+  - ✓ New `workspace.py` module for isolation utilities (PID, logging, paths)
+  - ✓ Two configs loaded independently, cursor files don't collide (verified in tests)
+  - ✓ 16 new workspace isolation tests, 245/245 passing (6 pre-existing failures excluded)
+  - ✓ Arch check clean on all new/modified files
+
+- **DWC.1 done** (2026-04-08)
+
+- **DWC.1 COMPLETE** — Per-workspace config file resolution (bpsai-computer)
+  - ✓ `load_config()` accepts optional `workspace` parameter
+  - ✓ When workspace provided: tries `~/.bpsai-computer/{workspace}.yaml`, then `config.yaml`
+  - ✓ When no workspace: uses `config.yaml` (existing behavior)
+  - ✓ CLI `--workspace` flag passes workspace to `load_config()`
+  - ✓ Clear `FileNotFoundError`: "No config found. Create ~/.bpsai-computer/{workspace}.yaml"
+  - ✓ 6 new workspace resolution tests (specific config, fallback, error, default, overrides, explicit path)
+  - ✓ 22/22 config+CLI tests passing, arch check clean
 
 - **CD3.5 done** (2026-04-07)
 
@@ -67,13 +90,13 @@
 
 ## What's Next
 
-1. CD3 sprint complete — all tasks done
+1. DWC.3 — Next task in DWC sprint (if any)
 2. Branch protection setup (BPSAI/paircoder#121)
 
 ```yaml
 project: bpsai-computer
 status: in_progress
-tests: 162 (bpsai-computer) + 15 new (bpsai-support)
-sprints_done: [CD1, CD2, CD2-FIX]
-sprint_active: CD3
+tests: 235+ (bpsai-computer)
+sprints_done: [CD1, CD2, CD2-FIX, CD3]
+sprint_active: DWC
 ```
