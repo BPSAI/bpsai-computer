@@ -63,6 +63,7 @@ class Daemon:
                 paircoder_api_url=config.paircoder_api_url,
                 license_id=license_id,
                 operator=config.operator,
+                org_id=config.org_id,
             )
             log.info("JWT auth enabled: license_id=%s", license_id)
         else:
