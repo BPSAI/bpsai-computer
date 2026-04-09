@@ -2,10 +2,7 @@ id: plan-sprint-0-engage
 phases:
 - id: 1
   tasks:
-  - DWC.1
-- id: 2
-  tasks:
-  - DWC.2
+  - DBS.1
 status: in_progress
 title: Sprint 0
 type: feature

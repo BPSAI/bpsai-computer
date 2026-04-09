@@ -154,7 +154,7 @@ class TestPushToA2A:
         ws.mkdir(parents=True)
         _create_repo_with_results(ws, "repo-a", _sample_results(passed=10, failed=1))
 
-        route = respx.post(f"{BASE}/signals").mock(
+        route = respx.post(f"{BASE}/signals/batch").mock(
             return_value=httpx.Response(200, json={"ok": True})
         )
         await collector.push_summaries()
@@ -169,6 +169,12 @@ class TestPushToA2A:
         assert sig["severity"] == "info"
         assert sig["payload"]["passed"] == 10
         assert sig["payload"]["failed"] == 1
+        # signal_id present and non-empty
+        assert isinstance(sig["signal_id"], str)
+        assert len(sig["signal_id"]) > 0
+        # Timestamp in canonical UTC format (no microseconds, Z suffix)
+        assert sig["timestamp"].endswith("Z")
+        assert "+" not in sig["timestamp"]
 
     @respx.mock
     async def test_auth_headers_sent_when_token_manager_set(self, config, cursor_path):
@@ -183,7 +189,7 @@ class TestPushToA2A:
         ws.mkdir(parents=True)
         _create_repo_with_results(ws, "repo-a", _sample_results())
 
-        route = respx.post(f"{BASE}/signals").mock(
+        route = respx.post(f"{BASE}/signals/batch").mock(
             return_value=httpx.Response(200, json={"ok": True})
         )
         await collector.push_summaries()
@@ -199,7 +205,7 @@ class TestPushToA2A:
         ts = "2026-04-08T12:00:00+00:00"
         repo = _create_repo_with_results(ws, "repo-a", _sample_results(ts=ts))
 
-        respx.post(f"{BASE}/signals").mock(
+        respx.post(f"{BASE}/signals/batch").mock(
             return_value=httpx.Response(200, json={"ok": True})
         )
         await collector.push_summaries()
@@ -217,7 +223,7 @@ class TestPushToA2A:
             str(collector._workspace_root / "repo-a"), ts,
         )
 
-        route = respx.post(f"{BASE}/signals").mock(
+        route = respx.post(f"{BASE}/signals/batch").mock(
             return_value=httpx.Response(200, json={"ok": True})
         )
         await collector.push_summaries()
@@ -234,7 +240,7 @@ class TestPushResilience:
         ws.mkdir(parents=True)
         _create_repo_with_results(ws, "repo-a", _sample_results())
 
-        respx.post(f"{BASE}/signals").mock(
+        respx.post(f"{BASE}/signals/batch").mock(
             return_value=httpx.Response(500, text="error")
         )
         await collector.push_summaries()  # should not raise
@@ -245,7 +251,7 @@ class TestPushResilience:
         ws.mkdir(parents=True)
         repo = _create_repo_with_results(ws, "repo-a", _sample_results())
 
-        respx.post(f"{BASE}/signals").mock(
+        respx.post(f"{BASE}/signals/batch").mock(
             return_value=httpx.Response(500, text="error")
         )
         await collector.push_summaries()
@@ -258,5 +264,5 @@ class TestPushResilience:
         ws.mkdir(parents=True)
         _create_repo_with_results(ws, "repo-a", _sample_results())
 
-        respx.post(f"{BASE}/signals").mock(side_effect=httpx.ConnectError("refused"))
+        respx.post(f"{BASE}/signals/batch").mock(side_effect=httpx.ConnectError("refused"))
         await collector.push_summaries()  # should not raise
