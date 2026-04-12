@@ -1,6 +1,6 @@
 # Execution Priorities — Post-Unified-Auth Assessment
 
-> **Updated:** 2026-04-09 (Phase A nearly complete, MLP shipped, agent-core v0.4.0, CLI v2.21.5+)
+> **Updated:** 2026-04-12 (Phase A nearly complete, MLP shipped, agent-core v0.4.0, CLI v2.22.1, WEH merged, ER1 in progress)
 > **Authors:** Mike Doggett + David Wiens + Computer
 > **Purpose:** Priority-ranked execution plan for next sprint planning
 > **Principle:** Ship the intelligence layer first. Every sprint that improves planning, retrieval, and self-awareness makes every subsequent sprint faster. Features ship faster through a smarter system than through a dumber one shipping features.
@@ -147,6 +147,27 @@ The framework has served as the proving ground for orchestration machinery (SENS
 
 #### Amunet
 - S4 complete, 704 tests
+
+### CLI v2.22.1 Hotfix (Apr 9)
+- License activation X-License-Key header missing — all subscribers blocked. Fixed, published to PyPI.
+
+### Windows Engage Hotfixes — WEH Sprint (Apr 12, merged to dev)
+- Security agent fail-closed for ALL exceptions (was fail-open on non-OSError)
+- Diff piped via temp file (Windows CreateProcess limit)
+- UTF-8 encoding on all engage subprocess calls
+- Backslash path normalization (Windows-only)
+- .paircoder/.gitignore for runtime artifacts
+- Forgiving backlog parser
+- Cross-module review extracted to engage_cross_module.py
+
+### Hook Improvements Backlog Drafted (HK1, 32cx)
+- TaskCompleted verifies meaningful output
+- StopFailure blocks and surfaces reason
+- SubagentStop + TeammateIdle push to A2A
+- Review skills use context: fork
+- Pre-task budget heuristic
+
+> **Note:** ER1 reliability sprint (13 tasks, 45cx) in progress.
 
 ### Tier 4: Features + Infrastructure (post-migration)
 

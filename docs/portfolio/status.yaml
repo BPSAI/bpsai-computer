@@ -1,6 +1,6 @@
 # Portfolio Status — Machine-readable, always current
 # Query: bpsai-pair status --portfolio (future), or read directly
-# Updated: 2026-04-09 (Iris S14, agent-core v0.4.0, CD3 merged, Lounge reseeded, Amunet S4)
+# Updated: 2026-04-12 (CLI v2.22.1, WEH merged to dev, ER1 in progress, HK1 queued)
 # NOTE: For priority decisions, also read execution-priorities.md
 
 repos:
@@ -9,7 +9,7 @@ repos:
     latest_sprint: CLI-IMS
     sprint_status: complete
     sprint_theme: "Branch Enforcement + Intent Merge Strategy"
-    version: 2.21.5
+    version: 2.22.1
     tests: 12844
     branch: main
     dev_synced: true
@@ -32,7 +32,10 @@ repos:
       - "Pre-PR security-auditor, size-scaled cross-module reviewer"
       - "PermissionDenied hook, dynamic base branch, JSONL injection fix"
     issues_closed: [131, 133, 134, 141, 143]
-    next: "Mythology rename on dev (nayru, laverna, bellona, vaivora, divona). Vaivora as third review agent. Engage targets dev. Next release pending."
+    weh_shipped: "Windows Engage Hotfixes merged to dev (fail-closed security, temp-file diff, UTF-8 encoding, backslash normalization, .gitignore, forgiving parser, cross-module extraction)"
+    er1_status: "ER1 reliability sprint in progress (13 tasks, 45cx)"
+    hk1_status: "HK1 hook improvements backlog drafted (32cx), queued"
+    next: "ER1 reliability sprint completing, then HK1 hook improvements. WEH merged to dev."
 
   paircoder_api:
     shortcode: API
@@ -75,6 +78,7 @@ repos:
       - "Git remote identity: projects identified by Owner/Repo, not local YAML keys"
       - "Cross-cycle finding dedup: finding_keys stored in CycleEntry, repeats suppressed"
       - "Standup truncation fix: long hypothesis titles in stale section"
+    mlp_briefing_pipeline: "MLP briefing pipeline shipped — Metis generates + pushes briefings to A2A on each heartbeat cycle"
     next: "MLP pipeline live. Metis pushes briefings to A2A on each heartbeat cycle."
 
   bpsai-framework:
@@ -290,7 +294,7 @@ repos:
     mb1_4_done: true  # briefing panel
     heimdall_presence: true  # platform sentinel on Lounge
     toroidal_heptagram: true  # 2026-03-30 — sacred geometry layout shipped
-    latest_update: "Agent data reseeded Apr 9. Live channel data wired (MLP.4-6)."
+    latest_update: "Agent data reseeded Apr 9. Live channel data wired (MLP.4-6). 351 tests."
     next: "Live data flows once bot heartbeat pushes to A2A"
 
   bpsai-computer:
@@ -492,9 +496,9 @@ design_decisions:
     - "Command Center: progressive build (web -> tablet -> stations -> Vision Pro)"
     - "Lounge intelligence deploys in A2A, extract later (transport/intelligence separation)"
 
-# Test counts (2026-04-09)
+# Test counts (2026-04-12)
 test_summary:
-  cli: 12844  # v2.21.5
+  cli: 12844  # v2.22.1
   framework: 1146  # post-Phase B extraction
   bot: 3082  # MLP pipeline
   iris: 3863  # S14 Phase 3b+3c
