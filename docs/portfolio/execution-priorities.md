@@ -1,6 +1,6 @@
 # Execution Priorities — Post-Unified-Auth Assessment
 
-> **Updated:** 2026-04-12 (Phase A nearly complete, MLP shipped, agent-core v0.4.0, CLI v2.22.1, WEH merged, ER1 in progress)
+> **Updated:** 2026-04-12 afternoon (A2A /signals endpoint built, agent-core v0.5.0 SignalTransport built, ER1 reviewed — fixes running, HK1 backlog drafted)
 > **Authors:** Mike Doggett + David Wiens + Computer
 > **Purpose:** Priority-ranked execution plan for next sprint planning
 > **Principle:** Ship the intelligence layer first. Every sprint that improves planning, retrieval, and self-awareness makes every subsequent sprint faster. Features ship faster through a smarter system than through a dumber one shipping features.
