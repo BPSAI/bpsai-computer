@@ -169,6 +169,38 @@ The framework has served as the proving ground for orchestration machinery (SENS
 
 > **Note:** ER1 reliability sprint (13 tasks, 45cx) in progress.
 
+---
+
+## Architecture Decisions Needed for Phase C
+
+### Containment Model for Computer Prime Dispatched Sprints
+
+**Problem discovered 2026-04-12:** The ER1 reliability sprint had 4 tasks silently produce empty commits because driver agents hit containment blocks on `tools/cli/bpsai_pair/orchestration/` (read-only tier). The current containment model assumes a human is always in the loop for protected path changes. Computer Prime breaks that assumption.
+
+When Prime dispatches a sprint to implement a feature or fix a bug, the driver agents may need to modify:
+- `.claude/agents/` — agent definitions (read-only)
+- `.claude/skills/` — skill definitions (read-only)
+- `.claude/commands/` — command definitions (read-only)
+- `bpsai_pair/orchestration/` — core pipeline (read-only)
+- `bpsai_pair/security/` — enforcement (read-only)
+- `bpsai_pair/core/` — core config (read-only)
+- `CLAUDE.md`, `AGENTS.md` — project instructions (read-only)
+
+All of these are blocked by containment. If Prime dispatches work to these paths, drivers fail silently.
+
+**Options (need Founders decision):**
+
+| Option | Approach | Safety | Autonomy |
+|--------|----------|--------|----------|
+| **A: Tiered agent permissions** | Prime gets higher containment tier than drivers. Prime can modify agent/skill definitions. Drivers cannot. | Medium — Prime can change its own agents | High |
+| **B: Sprint-scoped permission escalation** | Backlog includes a permission manifest. Engage preflight reads it, temporarily escalates. Reverts after sprint. | High — explicit, auditable, time-bounded | Medium |
+| **C: Staging area for protected changes** | Drivers write proposed changes to `.paircoder/staged-changes/`. Prime or human reviews and applies. | Highest — human review on all protected changes | Low |
+| **D: Hybrid B+C** | Auto-escalate for known-safe paths (skills, docs). Stage for security-critical paths (enforcement, containment config). | High | Medium-High |
+
+**Related:** HK1.7 (pre-engage containment audit) will detect this at preflight time. But detection without a resolution path just tells you it will fail — you still need a mechanism to proceed.
+
+**Evidence:** ER1 tasks 1-4 silently failed. WEH.5 would have also failed if skills/ hadn't been temporarily escalated. The pattern will recur in every sprint that touches infrastructure.
+
 ### Tier 4: Features + Infrastructure (post-migration)
 
 | Item | Repo | Effort | Status | Notes |
