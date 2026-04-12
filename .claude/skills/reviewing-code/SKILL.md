@@ -2,10 +2,25 @@
 name: reviewing-code
 description: Use when reviewing code changes, checking PRs, or evaluating code quality.
 skills: [reviewing-code]
-agent-roles: [reviewer]
+agent-roles: [nayru, laverna, vaivora]
 ---
 
 # Code Review
+
+## Review Pipeline
+
+The review pipeline dispatches three specialized agents:
+- **Nayru** (reviewer): code quality, correctness, best practices
+- **Laverna** (security-auditor): security vulnerabilities, SOC2 compliance
+- **Vaivora** (vaivora): cross-module contracts, dependency impact (large diffs only, >500 lines or >10 files)
+
+Use the review command to get the proper 3-agent pipeline:
+```bash
+bpsai-pair review pr <number>
+bpsai-pair review branch
+```
+
+**IMPORTANT:** Do NOT dispatch generic agents for review. The review command handles agent dispatch with proper mythology names, severity-aware output, and size-scaled Vaivora dispatch. If you are already inside a review command invocation, do not duplicate the dispatch -- the command handles it.
 
 ## Quick Commands
 
@@ -20,22 +35,6 @@ bpsai-pair validate
 git diff main...HEAD --stat
 git diff main...HEAD
 ```
-
-## Multi-Agent Review
-
-**Always dispatch both agents in parallel on every PR:**
-
-1. **Reviewer agent** -- correctness, architecture, test coverage, style
-2. **Security-auditor agent** -- vulnerabilities, operational risks (timeouts, resource leaks, error handling at boundaries), secrets
-
-All P0-P2 findings from BOTH agents must be resolved before merge.
-
-**For large PRs (>500 lines changed or >10 files), dispatch additional scoped reviewers:**
-
-3. **Second reviewer** -- focused on cross-module interactions, invariant fragility, operational scenarios (batch mode behavior, error propagation at pipeline boundaries)
-4. **If domain-specific changes:** reviewer scoped to that domain (e.g., audio pipeline correctness, auth flows, distribution contracts)
-
-Each additional reviewer gets a focused prompt describing their specific lens. Findings from all agents are merged into a single review.
 
 ## Review Output Format
 
