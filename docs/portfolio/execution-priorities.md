@@ -1,6 +1,6 @@
 # Execution Priorities — Post-Unified-Auth Assessment
 
-> **Updated:** 2026-04-12 afternoon (A2A /signals endpoint built, agent-core v0.5.0 SignalTransport built, ER1 reviewed — fixes running, HK1 backlog drafted)
+> **Updated:** 2026-04-12 night (CLI v2.23.0 released, 4 engage sprints shipped, 13,275+ tests, agent-core v0.5.0, A2A /signals live, #158 closed)
 > **Authors:** Mike Doggett + David Wiens + Computer
 > **Purpose:** Priority-ranked execution plan for next sprint planning
 > **Principle:** Ship the intelligence layer first. Every sprint that improves planning, retrieval, and self-awareness makes every subsequent sprint faster. Features ship faster through a smarter system than through a dumber one shipping features.
@@ -151,23 +151,33 @@ The framework has served as the proving ground for orchestration machinery (SENS
 ### CLI v2.22.1 Hotfix (Apr 9)
 - License activation X-License-Key header missing — all subscribers blocked. Fixed, published to PyPI.
 
-### Windows Engage Hotfixes — WEH Sprint (Apr 12, merged to dev)
-- Security agent fail-closed for ALL exceptions (was fail-open on non-OSError)
-- Diff piped via temp file (Windows CreateProcess limit)
-- UTF-8 encoding on all engage subprocess calls
-- Backslash path normalization (Windows-only)
-- .paircoder/.gitignore for runtime artifacts
-- Forgiving backlog parser
+### CLI v2.23.0 Released (Apr 12)
+Four engage sprints merged and released:
+
+**WEH — Windows Engage Hotfixes:**
+- Security agent fail-closed for ALL exceptions, diff via temp file
+- UTF-8 encoding on all subprocess calls, backslash path normalization
+- .paircoder/.gitignore, forgiving backlog parser
 - Cross-module review extracted to engage_cross_module.py
 
-### Hook Improvements Backlog Drafted (HK1, 32cx)
-- TaskCompleted verifies meaningful output
-- StopFailure blocks and surfaces reason
-- SubagentStop + TeammateIdle push to A2A
-- Review skills use context: fork
+**ER1 — Engage Reliability (13 tasks, 45cx):**
+- Hook failure propagation, on-disk dependency resolver
+- Human-gated tasks pause/resume, --create-branch/--branch flags
+- Orphan branch cleanup, phase summary with hook-failed column
+
+**EI — Engage Idempotency/Resume:**
+- `engage --resume`: skip completed tasks on retry
+- On-disk run state persistence, pre-engage containment audit
+
+**HK1 — Hook Intelligence (7 tasks, 37cx):**
+- TaskCompleted verifies meaningful output (empty commits flagged)
+- StopFailure blocks next task and surfaces reason
+- SubagentStop + TeammateIdle push to A2A channels
+- Review skills use context:fork for agent isolation
 - Pre-task budget heuristic
 
-> **Note:** ER1 reliability sprint (13 tasks, 45cx) in progress.
+**Also shipped:** Full test suite CI on every push to dev/main. 13,275+ tests.
+**Issue #158 closed** with comprehensive response to Mike.
 
 ---
 
@@ -278,7 +288,7 @@ All 4 candidates now have production code:
 
 | Candidate | Evidence | Status |
 |-----------|----------|--------|
-| 1. Enforcement Pipeline | 1,608 FW + 11,412 CLI tests | **Production** — ready |
+| 1. Enforcement Pipeline | 1,146 FW + 13,275 CLI tests | **Production** — ready |
 | 2. Agent Lounge / Epistemic Exchange | Signal Store, Decision Journal, Computer loop, Sense+Learn hooks, session briefings | **Production** — ready |
 | 3. Skill Discovery | Full intelligence pipeline: signals -> mappers -> recommender -> gate integration | **Production** — ready |
 | 4. Agent Lounge as Platform | Metis cognitive loop, coordination channels, briefings, 3,056 bot tests | **Production** — ready |
@@ -303,21 +313,21 @@ All 4 candidates now have production code:
 | **Phase C** (Computer Orchestration) | After B | ~150cx |
 | **Tier 4** (Features) | Backlogged | ~700cx+ |
 
-## Test Portfolio (2026-04-08)
+## Test Portfolio (2026-04-12)
 
 | Repo | Tests | Notes |
 |------|-------|-------|
-| CLI | 12,500+ | v2.21.5: review command, targeted tests, engage fixes |
+| CLI | 13,275+ | v2.23.0: 4 engage sprints, full CI |
 | Framework | 1,146 | Clean shared library (post-extraction) |
-| Bot | 2,961 | Metis Phase 1+2 + briefings + dedup fix |
-| A2A | 200+ | JWT auth + Key Vault + org scoping |
+| Bot | 3,082 | MLP briefing pipeline + A2A signal reader |
+| A2A | 355 | /signals endpoint + JWT + Key Vault + org scoping |
 | Command Center | 200+ | Zoho OAuth + session catalog + UAT |
-| Computer | 144 | CD2 + security fixes |
-| Agents | 133 | agent-core v0.3.0 |
+| Computer | 265 | CD3 + daemon workspace configs |
+| Agents | 228+ | agent-core v0.5.0 (SignalTransport) |
 | Twins | 65 | Extracted from framework |
 | Vaivora | 49 | Extracted, synthesis + clustering |
-| Iris | 3,600+ | S13 Phase 3 (instructional pipeline) |
+| Iris | 3,863 | Phase 3b+3c (PR #22 in review) |
 | Amunet | 704 | S4 workspace validation |
-| Lounge | 318 | Agent directory + briefing panel |
+| Lounge | 351 | Agent directory + briefing panel + live data |
 | Support | 1,651 | Portal JWT + license linking + functions |
-| **Total** | **~23,800+** | |
+| **Total** | **~25,200+** | |
