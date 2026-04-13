@@ -9,8 +9,8 @@ repos:
     latest_sprint: CLI-IMS
     sprint_status: complete
     sprint_theme: "Branch Enforcement + Intent Merge Strategy"
-    version: 2.22.1
-    tests: 12844
+    version: 2.23.0
+    tests: 13275
     branch: main
     dev_synced: true
     v2.21.4_shipped:
@@ -33,9 +33,27 @@ repos:
       - "PermissionDenied hook, dynamic base branch, JSONL injection fix"
     issues_closed: [131, 133, 134, 141, 143]
     weh_shipped: "Windows Engage Hotfixes merged to dev (fail-closed security, temp-file diff, UTF-8 encoding, backslash normalization, .gitignore, forgiving parser, cross-module extraction)"
-    er1_status: "ER1 reliability sprint in progress (13 tasks, 45cx)"
-    hk1_status: "HK1 hook improvements backlog drafted (32cx), queued"
-    next: "ER1 reliability sprint completing, then HK1 hook improvements. WEH merged to dev."
+    er1_status: "ER1 reliability sprint complete, merged to dev"
+    ei_status: "EI idempotency/resume sprint complete, merged to dev"
+    hk1_status: "HK1 hook intelligence sprint complete, merged to dev"
+    v2_23_0_released: true
+    v2_23_0_shipped:
+      - "engage --resume: skip completed tasks on retry"
+      - "Security agent fail-closed ALL exceptions, diff via temp file"
+      - "Hook failure propagation: tasks no longer silently succeed"
+      - "On-disk dependency verification"
+      - "Human-gated tasks: requires:human in backlog pauses engage"
+      - "--create-branch / --branch flags"
+      - "Pre-engage containment audit"
+      - "TaskCompleted verifies meaningful output"
+      - "StopFailure blocks next task and surfaces reason"
+      - "SubagentStop + TeammateIdle push to A2A"
+      - "Pre-task budget heuristic"
+      - "Review skills context:fork for agent isolation"
+      - "Forgiving backlog parser (em dash, double hyphen, single hyphen)"
+      - "UTF-8 encoding on all engage subprocess calls"
+      - "Full test suite CI on every push"
+    next: "v2.23.0 released. Next: propagate context:fork to workspace repos."
 
   paircoder_api:
     shortcode: API
@@ -194,7 +212,7 @@ repos:
     branch: main
     published: true
     packages:
-      agent-core: "v0.4.0 — BaseAgent, multi-plan, clustering, synthesis, hook protocols, enforcement ABCs, TokenManager, LicenseDiscovery"
+      agent-core: "v0.5.0 — BaseAgent, multi-plan, clustering, synthesis, hook protocols, enforcement ABCs, TokenManager, LicenseDiscovery, SignalTransport"
       agent-enforce: "v0.1.0 — EnforcementGate, pipelines, signal validation, evidence mechanics, hypothesis gates"
       agent-lounge: "v0.1.0 — HypothesisLifecycle, channels, beliefs, evidence mapper, briefings, standups"
     af2_shipped: "agent-enforce v0.1.0 + agent-lounge v0.1.0 on PyPI (2026-04-08), agent-core v0.4.0 with TokenManager + LicenseDiscovery extracted from computer"
@@ -233,7 +251,7 @@ repos:
   paircoder.ai:
     shortcode: WEB
     status: current
-    latest_update: "v2.21.3 + v2.21.2 + v2.21.1 + v2.21.0 changelog entries, 27 pages rebuilt"
+    latest_update: "v2.23.0 changelog + homepage stats update (13,275+ tests, 103K+ LOC)"
     branch: main
     dev_synced: true
 
@@ -498,7 +516,7 @@ design_decisions:
 
 # Test counts (2026-04-12)
 test_summary:
-  cli: 12844  # v2.22.1
+  cli: 13275  # v2.23.0
   framework: 1146  # post-Phase B extraction
   bot: 3082  # MLP pipeline
   iris: 3863  # S14 Phase 3b+3c
@@ -637,4 +655,4 @@ extraction_status:
   portfolio_docs_migration: complete  # status.yaml, decisions, hypotheses now in bpsai-computer
   dead_code_cleanup: complete  # dispatch_types, enforcement_config, content_router removed
   framework_state: "Clean shared library -- orchestration, enforcement, cognitive types, idea lifecycle"
-  agent_core_version: "v0.4.0 (hook protocols, sense/learn events, multi-plan, TokenManager, LicenseDiscovery)"
+  agent_core_version: "v0.5.0 (hook protocols, sense/learn events, multi-plan, TokenManager, LicenseDiscovery, SignalTransport)"
