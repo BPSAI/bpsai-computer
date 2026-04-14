@@ -1,42 +1,62 @@
-"""Dispatch orchestration, Navigator, and agent routing.
+"""Dispatch engine for launching Claude Code sessions in target repos.
 
-Extracted from bpsai-framework engine/dispatch/ and engine/navigator_orchestrator.py
-during Phase C.
+Replaces scripts/dispatch_navigator.sh with a Python abstraction that
+enforces security constraints per D-024: repo-type-aware enforcement,
+credential scrubbing, RC/subprocess dispatch modes.
 
-Modules:
-    orchestrator  -- DispatchOrchestrator, ReviewResult
-    dispatcher    -- Dispatcher, scrub_environment, build_command
-    config        -- DispatchResult, DispatchError, DispatchMode, RepoType, EnforcementMode
-    health_gate   -- BatchHealthGate, HealthGateConfig, HealthGateResult
-    classifier    -- RepoClassifier, detect_repo_type, select_enforcement
-    navigator     -- NavigatorOrchestrator, OrchestrationPhase, OrchestrationOutcome
+Key invariant: dispatch NEVER runs without enforcement.
 """
 
-__all__: list[str] = [
-    # orchestrator
-    "DispatchOrchestrator",
-    # dispatcher
-    "Dispatcher",
-    "scrub_environment",
-    "build_command",
-    # config
-    "DispatchResult",
+from computer.orchestration.classifier import (
+    RepoClassifier,
+    detect_repo_type,
+    select_enforcement,
+)
+from computer.orchestration.config import (
+    CREDENTIAL_KEYS,
+    CREDENTIAL_PATTERNS,
+    DEFAULT_ALLOWED_TOOLS,
+    CompletionStatus,
+    DispatchConfig,
+    DispatchError,
+    DispatchMode,
+    DispatchResult,
+    DispatchStatus,
+    EnforcementMode,
+    RepoType,
+)
+from computer.orchestration.orchestrator import (
+    DispatchOrchestrator,
+    ReviewResult,
+)
+from computer.orchestration.dispatcher import (
+    Dispatcher,
+    build_command,
+    scrub_environment,
+)
+
+__all__ = [
+    # Config & types
+    "CompletionStatus",
+    "CREDENTIAL_KEYS",
+    "CREDENTIAL_PATTERNS",
+    "DEFAULT_ALLOWED_TOOLS",
+    "DispatchConfig",
     "DispatchError",
     "DispatchMode",
+    "DispatchResult",
     "DispatchStatus",
-    "CompletionStatus",
-    "RepoType",
     "EnforcementMode",
-    # health_gate
-    "BatchHealthGate",
-    "HealthGateConfig",
-    "HealthGateResult",
-    # classifier
+    "RepoType",
+    # Classifier
     "RepoClassifier",
     "detect_repo_type",
     "select_enforcement",
-    # navigator
-    "NavigatorOrchestrator",
-    "OrchestrationPhase",
-    "OrchestrationOutcome",
+    # Dispatcher
+    "Dispatcher",
+    "build_command",
+    "scrub_environment",
+    # Orchestrator
+    "DispatchOrchestrator",
+    "ReviewResult",
 ]
