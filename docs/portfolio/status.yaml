@@ -9,8 +9,8 @@ repos:
     latest_sprint: CLI-IMS
     sprint_status: complete
     sprint_theme: "Branch Enforcement + Intent Merge Strategy"
-    version: 2.23.0
-    tests: 13275
+    version: 2.24.0
+    tests: 13253
     branch: main
     dev_synced: true
     v2.21.4_shipped:
@@ -36,7 +36,7 @@ repos:
     er1_status: "ER1 reliability sprint complete, merged to dev"
     ei_status: "EI idempotency/resume sprint complete, merged to dev"
     hk1_status: "HK1 hook intelligence sprint complete, merged to dev"
-    v2_23_0_released: true
+    v2_24_0_released: true
     v2_23_0_shipped:
       - "engage --resume: skip completed tasks on retry"
       - "Security agent fail-closed ALL exceptions, diff via temp file"

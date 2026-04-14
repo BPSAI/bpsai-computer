@@ -1,6 +1,6 @@
 # Execution Priorities — Post-Unified-Auth Assessment
 
-> **Updated:** 2026-04-12 night (CLI v2.23.0 released, 4 engage sprints shipped, 13,275+ tests, agent-core v0.5.0, A2A /signals live, #158 closed)
+> **Updated:** 2026-04-13 night (CLI v2.24.0 released -- sweep command shipped, agent-core v0.6.0 AnalysisProvider, Amunet sweep capability, Vaivora contract analysis, CI green 13,253+ tests, 5 new doc pages + sweep guide)
 > **Authors:** Mike Doggett + David Wiens + Computer
 > **Purpose:** Priority-ranked execution plan for next sprint planning
 > **Principle:** Ship the intelligence layer first. Every sprint that improves planning, retrieval, and self-awareness makes every subsequent sprint faster. Features ship faster through a smarter system than through a dumber one shipping features.
@@ -313,19 +313,19 @@ All 4 candidates now have production code:
 | **Phase C** (Computer Orchestration) | After B | ~150cx |
 | **Tier 4** (Features) | Backlogged | ~700cx+ |
 
-## Test Portfolio (2026-04-12)
+## Test Portfolio (2026-04-13)
 
 | Repo | Tests | Notes |
 |------|-------|-------|
-| CLI | 13,275+ | v2.23.0: 4 engage sprints, full CI |
+| CLI | 13,253+ | v2.24.0: sweep shipped, full CI green |
 | Framework | 1,146 | Clean shared library (post-extraction) |
 | Bot | 3,082 | MLP briefing pipeline + A2A signal reader |
 | A2A | 355 | /signals endpoint + JWT + Key Vault + org scoping |
 | Command Center | 200+ | Zoho OAuth + session catalog + UAT |
 | Computer | 265 | CD3 + daemon workspace configs |
-| Agents | 228+ | agent-core v0.5.0 (SignalTransport) |
+| Agents | 262+ | agent-core v0.6.0 (AnalysisProvider) |
 | Twins | 65 | Extracted from framework |
-| Vaivora | 49 | Extracted, synthesis + clustering |
+| Vaivora | 156+ | Contract analysis + A2A handler |
 | Iris | 3,863 | Phase 3b+3c (PR #22 in review) |
 | Amunet | 704 | S4 workspace validation |
 | Lounge | 351 | Agent directory + briefing panel + live data |
