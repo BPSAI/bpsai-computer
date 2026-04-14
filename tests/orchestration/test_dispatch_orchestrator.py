@@ -224,18 +224,18 @@ class TestDispatchOrchestratorReview:
 
 class TestDispatchHook:
     def test_phase_is_dispatch(self):
-        from engine.orchestration.dispatch.dispatch_hook import DispatchHook
+        from computer.hooks.dispatch_hook import DispatchHook
         hook = DispatchHook(orchestrator=MagicMock())
         assert hook.phase == Phase.DISPATCH
 
     def test_priority(self):
-        from engine.orchestration.dispatch.dispatch_hook import DispatchHook
+        from computer.hooks.dispatch_hook import DispatchHook
         hook = DispatchHook(orchestrator=MagicMock())
         assert isinstance(hook.priority, int)
 
     @pytest.mark.asyncio
     async def test_dispatches_approved_backlogs(self):
-        from engine.orchestration.dispatch.dispatch_hook import DispatchHook
+        from computer.hooks.dispatch_hook import DispatchHook
         orch = MagicMock()
         orch.dispatch.return_value = _make_dispatch_result()
         hook = DispatchHook(orchestrator=orch)
@@ -247,7 +247,7 @@ class TestDispatchHook:
 
     @pytest.mark.asyncio
     async def test_skips_when_no_backlogs(self):
-        from engine.orchestration.dispatch.dispatch_hook import DispatchHook
+        from computer.hooks.dispatch_hook import DispatchHook
         orch = MagicMock()
         hook = DispatchHook(orchestrator=orch)
         ctx = _make_tick_context()
@@ -257,7 +257,7 @@ class TestDispatchHook:
 
     @pytest.mark.asyncio
     async def test_idempotent_across_ticks(self):
-        from engine.orchestration.dispatch.dispatch_hook import DispatchHook
+        from computer.hooks.dispatch_hook import DispatchHook
         orch = MagicMock()
         orch.dispatch.return_value = _make_dispatch_result()
         hook = DispatchHook(orchestrator=orch)
@@ -274,13 +274,13 @@ class TestDispatchHook:
 
 class TestReviewHook:
     def test_phase_is_enforce(self):
-        from engine.orchestration.enforce.review_hook import ReviewHook
+        from computer.hooks.review_hook import ReviewHook
         hook = ReviewHook(orchestrator=MagicMock())
         assert hook.phase == Phase.ENFORCE
 
     @pytest.mark.asyncio
     async def test_reviews_completed_dispatches(self):
-        from engine.orchestration.enforce.review_hook import ReviewHook
+        from computer.hooks.review_hook import ReviewHook
         orch = MagicMock()
         orch.review.return_value = ReviewResult(
             passed=True, findings=["ok"],
@@ -300,7 +300,7 @@ class TestReviewHook:
 
     @pytest.mark.asyncio
     async def test_skips_when_no_completed_dispatches(self):
-        from engine.orchestration.enforce.review_hook import ReviewHook
+        from computer.hooks.review_hook import ReviewHook
         orch = MagicMock()
         hook = ReviewHook(orchestrator=orch)
         ctx = _make_tick_context()
@@ -310,7 +310,7 @@ class TestReviewHook:
 
     @pytest.mark.asyncio
     async def test_idempotent(self):
-        from engine.orchestration.enforce.review_hook import ReviewHook
+        from computer.hooks.review_hook import ReviewHook
         orch = MagicMock()
         orch.review.return_value = ReviewResult(passed=True, findings=[])
         hook = ReviewHook(orchestrator=orch)
@@ -331,8 +331,8 @@ class TestReviewHook:
 
 class TestHookRegistration:
     def test_dispatch_and_review_hooks_satisfy_protocol(self):
-        from engine.orchestration.dispatch.dispatch_hook import DispatchHook
-        from engine.orchestration.enforce.review_hook import ReviewHook
+        from computer.hooks.dispatch_hook import DispatchHook
+        from computer.hooks.review_hook import ReviewHook
         from engine.orchestration.phase_registry import PhaseHook, PhaseRegistry
 
         registry = PhaseRegistry()

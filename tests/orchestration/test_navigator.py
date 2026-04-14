@@ -22,7 +22,7 @@ from computer.orchestration.navigator import (
     OrchestrationOutcome,
     OrchestrationPhase,
 )
-from engine.sprint_planner import SprintBacklog, SprintTask
+from computer.planning.types import SprintBacklog, SprintTask
 
 
 # ---------- Helpers ----------
@@ -93,7 +93,7 @@ class TestCompletionDetector:
         """Git polling detects completion when PR exists."""
         detector = CompletionDetector()
         # Mock gh pr list returning a PR
-        with patch("engine.completion_detector.subprocess.run") as mock_run:
+        with patch("computer.status.completion.subprocess.run") as mock_run:
             mock_run.return_value = MagicMock(
                 returncode=0,
                 stdout='[{"number": 5, "state": "OPEN"}]',
@@ -106,7 +106,7 @@ class TestCompletionDetector:
     def test_git_polling_no_pr(self, tmp_path):
         """No PR means still in progress."""
         detector = CompletionDetector()
-        with patch("engine.completion_detector.subprocess.run") as mock_run:
+        with patch("computer.status.completion.subprocess.run") as mock_run:
             mock_run.return_value = MagicMock(
                 returncode=0,
                 stdout="[]",
