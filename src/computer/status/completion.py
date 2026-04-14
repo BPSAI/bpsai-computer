@@ -36,11 +36,14 @@ class CompletionDetector:
         return CompletionStatus.IN_PROGRESS
 
     def check_git(self, repo_path: Path, branch: str = "") -> CompletionStatus:
-        """Check completion via git polling (PR existence)."""
+        """Check completion via git polling (PR existence).
+
+        Runs gh from within repo_path (cwd) so --repo flag is not needed.
+        """
+        cmd = ["gh", "pr", "list", "--head", branch, "--json", "number,state"]
         try:
             result = subprocess.run(
-                ["gh", "pr", "list", "--repo", str(repo_path),
-                 "--head", branch, "--json", "number,state"],
+                cmd,
                 capture_output=True, text=True, cwd=repo_path,
             )
         except FileNotFoundError:

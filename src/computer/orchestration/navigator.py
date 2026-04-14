@@ -118,6 +118,15 @@ class NavigatorOrchestrator:
                 delivery_result=delivery, dispatch_result=dispatch_result,
             )
 
+        _TERMINAL_OK = {CompletionStatus.COMPLETE, CompletionStatus.PR_READY}
+        if completion not in _TERMINAL_OK:
+            self._record(backlog, dispatch_result, success=False)
+            return OrchestrationOutcome(
+                success=False, phase_reached=OrchestrationPhase.MONITOR,
+                error=f"Navigator not yet complete (status: {completion.value})",
+                delivery_result=delivery, dispatch_result=dispatch_result,
+            )
+
         review_result = self._dispatch_review(repo_path, backlog)
         review_ok = review_result.reviewer_dispatched or review_result.auditor_dispatched
         decision_id = self._record(backlog, dispatch_result, success=True)
