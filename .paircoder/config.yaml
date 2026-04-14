@@ -1,5 +1,5 @@
 project_name: bpsai-computer
-version: 2.21.5
+version: 2.24.0
 description: "Computer\u2080 \u2014 workspace orchestrator and dispatch daemon"
 project:
   name: Computer
@@ -39,6 +39,7 @@ models:
       - claude-sonnet-4-5
       - claude-haiku-4-5
       default_effort: medium
+  nayru: claude-sonnet-4-6
 routing:
   by_complexity:
     trivial:
