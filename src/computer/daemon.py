@@ -49,6 +49,8 @@ class Daemon:
         self.config = config
         self.running = False
         self._processed_ids: OrderedDict[str, None] = OrderedDict()
+        self._message_handlers: dict[str, Callable[[dict], Awaitable[None]]] = {}
+        self._register_default_handlers()
 
         # Resolve license_id: config value wins, then auto-discover from file
         license_id: str | None = None
@@ -83,6 +85,28 @@ class Daemon:
         self.ci_collector = CISummaryCollector(config=config, token_manager=token_manager)
         if not config.a2a_url.startswith("https://"):
             log.warning("a2a_url is not HTTPS: %s — traffic will be unencrypted", config.a2a_url)
+
+    def _register_default_handlers(self) -> None:
+        """Register built-in message type handlers."""
+        self._message_handlers["dispatch"] = lambda raw: self._process_dispatch(raw)
+        self._message_handlers["resume"] = lambda raw: self._process_resume(raw)
+
+    def register_message_handler(
+        self, message_type: str, handler: Callable[[dict], Awaitable[None]],
+    ) -> None:
+        """Register a handler for a message type. Replaces any existing handler."""
+        self._message_handlers[message_type] = handler
+
+    async def _route_message(self, raw_msg: dict) -> None:
+        """Route a message to its registered handler, or ack-and-log if unknown."""
+        msg_type = raw_msg.get("type", "dispatch")
+        handler = self._message_handlers.get(msg_type)
+        if handler is not None:
+            await handler(raw_msg)
+        else:
+            msg_id = raw_msg.get("id", "")
+            log.warning("Unknown message type %r (id=%s) — acking as unsupported", msg_type, msg_id)
+            await self.a2a.ack_message(msg_id, response="unsupported_message_type")
 
     def shutdown(self) -> None:
         log.info("Shutdown requested")
@@ -220,10 +244,7 @@ class Daemon:
                     self._processed_ids[msg_id] = None
                     if len(self._processed_ids) > _MAX_PROCESSED_IDS:
                         self._processed_ids.popitem(last=False)
-                    if raw_msg.get("type") == "resume":
-                        await self._process_resume(raw_msg)
-                    else:
-                        await self._process_dispatch(raw_msg)
+                    await self._route_message(raw_msg)
                 try:
                     await self.signal_pusher.push_signals()
                 except Exception as exc:
