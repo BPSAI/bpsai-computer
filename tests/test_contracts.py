@@ -157,6 +157,37 @@ class TestHeartbeatRequest:
         assert req.metadata == {}
 
 
+class TestWorkspaceInfo:
+    def test_valid(self):
+        from computer.contracts import WorkspaceInfo
+
+        ws = WorkspaceInfo(
+            workspace_id="ws-001", name="My Project",
+            workspace_root="/home/alice/proj", status="active",
+        )
+        assert ws.workspace_id == "ws-001"
+        assert ws.workspace_root == "/home/alice/proj"
+
+    def test_workspace_root_optional(self):
+        from computer.contracts import WorkspaceInfo
+
+        ws = WorkspaceInfo(workspace_id="ws-002", name="Cloud", status="inactive")
+        assert ws.workspace_root is None
+
+    def test_invalid_status_rejected(self):
+        from computer.contracts import WorkspaceInfo
+
+        with pytest.raises(ValidationError):
+            WorkspaceInfo(workspace_id="ws-bad", name="Bad", status="deleted")
+
+    def test_all_valid_statuses(self):
+        from computer.contracts import WorkspaceInfo
+
+        for s in ("active", "inactive", "archived"):
+            ws = WorkspaceInfo(workspace_id="ws", name="ws", status=s)
+            assert ws.status == s
+
+
 class TestChannelEnvelope:
     def test_valid(self):
         env = ChannelEnvelope(

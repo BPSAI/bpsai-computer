@@ -257,3 +257,15 @@ class PermissionResponseContent(BaseModel):
     @classmethod
     def check_scope(cls, v: str) -> str:
         return _validate_scope(v)
+
+
+# -- Workspace listing ---------------------------------------------------------
+
+
+class WorkspaceInfo(BaseModel):
+    """A workspace returned by GET /workspaces."""
+
+    workspace_id: str
+    name: str
+    workspace_root: str | None = None
+    status: str = Field(..., pattern=r"^(active|inactive|archived)$")

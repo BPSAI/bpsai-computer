@@ -26,6 +26,7 @@ from computer.contracts.messages import (
     SessionStartedContent,
     SignalBatchItem,
     SignalBatchRequest,
+    WorkspaceInfo,
     severities_at_or_above,
 )
 from computer.contracts.schema_export import all_schemas
@@ -52,6 +53,7 @@ __all__ = [
     "SessionStartedContent",
     "SignalBatchItem",
     "SignalBatchRequest",
+    "WorkspaceInfo",
     "all_schemas",
     "severities_at_or_above",
 ]

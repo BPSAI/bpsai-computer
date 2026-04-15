@@ -11,6 +11,22 @@
 
 ## What Was Just Done
 
+- **T2I.7 done** (2026-04-15)
+
+- **T2I.7 COMPLETE** — Workspace listing endpoint (paircoder_api + bpsai-computer)
+  - ✓ `Workspace` SQLAlchemy model: workspace_id, name, workspace_root (optional), status, org_id
+  - ✓ `WorkspaceStatus` enum: active, inactive, archived
+  - ✓ `GET /workspaces` route with JWT auth, scoped by org_id from claims
+  - ✓ `require_jwt` dependency: validates both operator JWT (iss=paircoder-api) and portal JWT (iss=bpsai-portal)
+  - ✓ `WorkspaceService.list_for_org()` — returns non-archived workspaces sorted by name
+  - ✓ `WorkspaceInfo` Pydantic contract in bpsai-computer contracts
+  - ✓ Response: `{workspaces: [{workspace_id, name, workspace_root, status}]}`
+  - ✓ Missing org_id in JWT returns 400
+  - ✓ 14 paircoder_api tests (model, auth, route), 4 bpsai-computer contract tests
+  - ✓ 1,409/1,409 paircoder_api tests passing (excl. 5 pre-existing failures), 24/24 contract tests passing
+
+- **T2I.6 done** (auto-updated by hook)
+
 - **T2I.6 done** (2026-04-15)
 
 - **T2I.6 COMPLETE** — Notification severity routing (bpsai-computer + bpsai-a2a)
