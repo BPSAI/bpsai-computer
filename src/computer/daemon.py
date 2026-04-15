@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import json
 import logging
 import platform
 import re
@@ -90,6 +91,7 @@ class Daemon:
         """Register built-in message type handlers."""
         self._message_handlers["dispatch"] = lambda raw: self._process_dispatch(raw)
         self._message_handlers["resume"] = lambda raw: self._process_resume(raw)
+        self._message_handlers["permission-response"] = lambda raw: self._process_permission_response(raw)
 
     def register_message_handler(
         self, message_type: str, handler: Callable[[dict], Awaitable[None]],
@@ -221,6 +223,23 @@ class Daemon:
             resumed=True,
         )
         log.info("Resume %s complete: success=%s session=%s", msg.message_id, result.success, session_id)
+
+    async def _process_permission_response(self, raw_msg: dict) -> None:
+        """Process a permission-response: ack and log the decision."""
+        msg_id = raw_msg.get("id", "")
+        try:
+            content = json.loads(raw_msg.get("content", "{}"))
+            approved = content.get("approved", False)
+            scope = content.get("scope", "unknown")
+            ttl = content.get("ttl", 0)
+            request_id = content.get("request_id", "")
+            log.info(
+                "Permission response id=%s: approved=%s scope=%s ttl=%s request_id=%s",
+                msg_id, approved, scope, ttl, request_id,
+            )
+        except Exception as exc:
+            log.warning("Failed to parse permission-response id=%s: %s", msg_id, exc)
+        await self.a2a.ack_message(msg_id, response="permission-noted")
 
     async def _heartbeat_loop(self) -> None:
         """Send heartbeats every 30s while a dispatch is running."""

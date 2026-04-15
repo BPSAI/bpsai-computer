@@ -85,6 +85,7 @@ class TestSchemaExport:
             "SessionOutputContent", "SignalBatchItem", "SignalBatchRequest",
             "HeartbeatRequest", "PlanProposalContent", "DriverStatusContent",
             "ReviewResultContent", "SessionResumeContent",
+            "PermissionRequestContent", "PermissionResponseContent",
         }
         assert expected_keys == set(schemas.keys())
 

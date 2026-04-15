@@ -8,7 +8,7 @@ Phase C types: plan-proposal, driver-status, review-result, session-resume.
 
 from __future__ import annotations
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 
 # -- Channel envelope (wraps all messages) -----------------------------------
@@ -173,3 +173,49 @@ class SessionResumeContent(BaseModel):
     session_id: str = Field(..., max_length=256)
     reason: str = Field(..., max_length=1000)
     resumed_from: str | None = Field(None, max_length=256)
+
+
+# -- Permission escalation (T2I.5) -----------------------------------------
+
+_VALID_OPERATIONS = frozenset({"read", "write", "execute"})
+_VALID_SCOPES = frozenset({"file", "directory", "glob"})
+
+
+def _validate_operation(v: str) -> str:
+    if v not in _VALID_OPERATIONS:
+        raise ValueError(f"operation must be one of {sorted(_VALID_OPERATIONS)}, got {v!r}")
+    return v
+
+
+def _validate_scope(v: str) -> str:
+    if v not in _VALID_SCOPES:
+        raise ValueError(f"scope must be one of {sorted(_VALID_SCOPES)}, got {v!r}")
+    return v
+
+
+class PermissionRequestContent(BaseModel):
+    """Content of a permission-request message (Driver -> CC/operator)."""
+
+    path: str = Field(..., max_length=512)
+    operation: str = Field(..., max_length=32)
+    reason: str = Field(..., max_length=1000)
+    task_id: str = Field(..., max_length=64)
+
+    @field_validator("operation")
+    @classmethod
+    def check_operation(cls, v: str) -> str:
+        return _validate_operation(v)
+
+
+class PermissionResponseContent(BaseModel):
+    """Content of a permission-response message (operator/Navigator -> Driver)."""
+
+    approved: bool
+    scope: str = Field(..., max_length=32)
+    ttl: int = Field(..., ge=0)
+    request_id: str | None = Field(None, max_length=256)
+
+    @field_validator("scope")
+    @classmethod
+    def check_scope(cls, v: str) -> str:
+        return _validate_scope(v)

@@ -8,6 +8,8 @@ from computer.contracts.messages import (
     DispatchResultContent,
     DriverStatusContent,
     HeartbeatRequest,
+    PermissionRequestContent,
+    PermissionResponseContent,
     PlanProposalContent,
     ResumeContent,
     ReviewResultContent,
@@ -36,6 +38,8 @@ _ALL_MODELS = {
     "DriverStatusContent": DriverStatusContent,
     "ReviewResultContent": ReviewResultContent,
     "SessionResumeContent": SessionResumeContent,
+    "PermissionRequestContent": PermissionRequestContent,
+    "PermissionResponseContent": PermissionResponseContent,
 }
 
 
