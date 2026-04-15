@@ -48,7 +48,7 @@ class TestPollDispatches:
         )
         await client.poll_dispatches()
         request = route.calls[0].request
-        assert "agent=computer" in str(request.url)
+        assert "project=computer" in str(request.url)
         assert "operator=mike" in str(request.url)
         assert "workspace=bpsai" in str(request.url)
         assert "limit=10" in str(request.url)

@@ -56,7 +56,7 @@ class TestTaskIdPrefixes:
             **Description:** Third task
         """)
         p = tmp_path / "mixed.md"
-        p.write_text(content)
+        p.write_text(content, encoding="utf-8")
         result = BacklogParser.parse(p)
         assert len(result.tasks) == 3
         assert [t.id for t in result.tasks] == ["T1.1", "BP2", "G3.P1"]
@@ -76,7 +76,7 @@ class TestAcceptanceCriteria:
             - [ ] Second criterion
         """)
         p = tmp_path / "ac.md"
-        p.write_text(content)
+        p.write_text(content, encoding="utf-8")
         result = BacklogParser.parse(p)
         assert result.tasks[0].ac_items == ["First criterion", "Second criterion"]
 
@@ -93,7 +93,7 @@ class TestAcceptanceCriteria:
             - [ ] Pending item
         """)
         p = tmp_path / "ac2.md"
-        p.write_text(content)
+        p.write_text(content, encoding="utf-8")
         result = BacklogParser.parse(p)
         assert len(result.tasks[0].ac_items) == 2
 
@@ -110,7 +110,7 @@ class TestDependencies:
             **Depends on:** T1.1
         """)
         p = tmp_path / "deps.md"
-        p.write_text(content)
+        p.write_text(content, encoding="utf-8")
         result = BacklogParser.parse(p)
         assert result.tasks[0].depends_on == ["T1.1"]
 
@@ -125,7 +125,7 @@ class TestDependencies:
             **Depends on:** BP1, BP2
         """)
         p = tmp_path / "multi_deps.md"
-        p.write_text(content)
+        p.write_text(content, encoding="utf-8")
         result = BacklogParser.parse(p)
         assert set(result.tasks[0].depends_on) == {"BP1", "BP2"}
 
@@ -148,7 +148,7 @@ class TestPhases:
             **Description:** Phase 2 task
         """)
         p = tmp_path / "phases.md"
-        p.write_text(content)
+        p.write_text(content, encoding="utf-8")
         result = BacklogParser.parse(p)
         assert result.tasks[0].phase == 1
         assert result.tasks[1].phase == 2
@@ -198,7 +198,7 @@ class TestRoundTrip:
         md = renderer.render(backlog)
 
         p = tmp_path / "rendered.md"
-        p.write_text(md)
+        p.write_text(md, encoding="utf-8")
         result = BacklogParser.parse(p)
 
         assert len(result.tasks) == 2
@@ -215,5 +215,5 @@ class TestRoundTrip:
 def _write_backlog(tmp_path: Path, name: str, task_line: str) -> Path:
     content = f"# Test Backlog\n\n{task_line}\n\n**Description:** A test task\n"
     p = tmp_path / name
-    p.write_text(content)
+    p.write_text(content, encoding="utf-8")
     return p

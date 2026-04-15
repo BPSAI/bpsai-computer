@@ -11,6 +11,7 @@ import respx
 
 from computer.a2a_client import A2AClient
 from computer.config import DaemonConfig
+from computer.dispatcher import DispatchResult
 
 
 BASE = "http://localhost:9999"
@@ -93,9 +94,9 @@ class TestProcessedIdsBounded:
 
 
 class TestMalformedJsonDispatch:
-    """Malformed structured JSON (valid JSON, missing keys) should log warning."""
+    """Malformed structured JSON (valid JSON, missing keys) falls through to plain-text parse."""
 
-    async def test_malformed_json_dispatch_logs_warning(self, config, caplog):
+    async def test_malformed_json_dispatch_falls_through(self, config, caplog):
         from computer.daemon import Daemon
         d = Daemon(config)
         d.a2a = AsyncMock()
@@ -104,6 +105,10 @@ class TestMalformedJsonDispatch:
         d.a2a.post_lifecycle = AsyncMock()
         d.a2a.post_session_output = AsyncMock()
         d.a2a.heartbeat = AsyncMock()
+        d.executor = AsyncMock()
+        d.executor.execute = AsyncMock(
+            return_value=DispatchResult(message_id="msg-bad", success=True, output="ok")
+        )
 
         raw_msg = {
             "id": "msg-bad",
@@ -111,14 +116,11 @@ class TestMalformedJsonDispatch:
             "content": json.dumps({"agent": "driver"}),  # missing target/prompt
         }
 
-        with caplog.at_level(logging.WARNING):
-            await d._process_dispatch(raw_msg)
+        await d._process_dispatch(raw_msg)
 
-        # Should have logged an error about parse failure
-        assert any("parse" in r.message.lower() or "failed" in r.message.lower() for r in caplog.records)
-
-        # Should NOT have called execute
-        d.a2a.post_result.assert_not_called()
+        # Parse no longer fails — falls through to plain-text format
+        # Message should be acked and processed
+        d.a2a.ack_message.assert_called_once()
 
 
 # ── HTTPS warning ─────────────────────────────────────────────────

@@ -39,6 +39,7 @@ def config(workspace, tmp_path):
         workspace="bpsai",
         workspace_root=str(workspace),
         a2a_url=BASE,
+        paircoder_api_url=BASE,
         poll_interval=1,
         process_timeout=30,
         license_id="lic-test",
@@ -61,6 +62,11 @@ class TestDaemonSignalPush:
         signals_dir.mkdir(parents=True)
         (signals_dir / "signals.jsonl").write_text(_make_signal() + "\n")
 
+        # Mock JWT auth
+        respx.post(f"{BASE}/api/v1/auth/operator-token").mock(
+            return_value=httpx.Response(200, json={"token": "fake-jwt", "expires_at": 9999999999})
+        )
+
         daemon = Daemon(config)
 
         # Mock poll to return empty (no dispatches)
@@ -68,7 +74,7 @@ class TestDaemonSignalPush:
             return_value=httpx.Response(200, json={"messages": []})
         )
         # Mock signal push endpoint
-        signal_route = respx.post(f"{BASE}/signals").mock(
+        signal_route = respx.post(f"{BASE}/signals/batch").mock(
             return_value=httpx.Response(200, json={"ok": True})
         )
 
@@ -89,6 +95,11 @@ class TestDaemonSignalPush:
         signals_dir.mkdir(parents=True)
         (signals_dir / "signals.jsonl").write_text(_make_signal() + "\n")
 
+        # Mock JWT auth
+        respx.post(f"{BASE}/api/v1/auth/operator-token").mock(
+            return_value=httpx.Response(200, json={"token": "fake-jwt", "expires_at": 9999999999})
+        )
+
         daemon = Daemon(config)
 
         poll_count = 0
@@ -99,7 +110,7 @@ class TestDaemonSignalPush:
             return httpx.Response(200, json={"messages": []})
 
         respx.get(f"{BASE}/messages/feed").mock(side_effect=poll_side_effect)
-        respx.post(f"{BASE}/signals").mock(
+        respx.post(f"{BASE}/signals/batch").mock(
             return_value=httpx.Response(500, text="error")
         )
 

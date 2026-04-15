@@ -27,6 +27,7 @@ def config(workspace):
         workspace="bpsai",
         workspace_root=str(workspace),
         a2a_url=BASE,
+        paircoder_api_url=BASE,
         poll_interval=1,
         process_timeout=30,
         license_id="lic-test",
@@ -44,6 +45,10 @@ class TestDaemonGitCIPush:
     @respx.mock
     async def test_git_push_runs_each_cycle(self, config, workspace):
         """Git summary push called on each poll iteration."""
+        # Mock JWT auth
+        respx.post(f"{BASE}/api/v1/auth/operator-token").mock(
+            return_value=httpx.Response(200, json={"token": "fake-jwt", "expires_at": 9999999999})
+        )
         # Create a git repo in workspace
         (workspace / "my-repo" / ".git").mkdir(parents=True)
 
@@ -54,7 +59,7 @@ class TestDaemonGitCIPush:
         respx.get(f"{BASE}/messages/feed").mock(
             return_value=httpx.Response(200, json={"messages": []})
         )
-        respx.post(f"{BASE}/signals").mock(
+        respx.post(f"{BASE}/signals/batch").mock(
             return_value=httpx.Response(200, json={"ok": True})
         )
 
@@ -71,6 +76,11 @@ class TestDaemonGitCIPush:
     @respx.mock
     async def test_git_push_failure_does_not_block_polling(self, config, workspace):
         """If git/CI push fails, dispatch polling continues."""
+        # Mock JWT auth
+        respx.post(f"{BASE}/api/v1/auth/operator-token").mock(
+            return_value=httpx.Response(200, json={"token": "fake-jwt", "expires_at": 9999999999})
+        )
+
         daemon = Daemon(config)
         daemon.git_collector.push_summaries = AsyncMock(side_effect=Exception("git boom"))
         daemon.ci_collector.push_summaries = AsyncMock(side_effect=Exception("ci boom"))
@@ -83,7 +93,7 @@ class TestDaemonGitCIPush:
             return httpx.Response(200, json={"messages": []})
 
         respx.get(f"{BASE}/messages/feed").mock(side_effect=poll_side_effect)
-        respx.post(f"{BASE}/signals").mock(
+        respx.post(f"{BASE}/signals/batch").mock(
             return_value=httpx.Response(200, json={"ok": True})
         )
 

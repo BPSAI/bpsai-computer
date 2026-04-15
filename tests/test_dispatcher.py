@@ -46,14 +46,17 @@ class TestParseDispatch:
         assert msg.target == "bpsai-a2a"
         assert msg.prompt == "audit this repo"
 
-    def test_parse_missing_structured_fields_raises(self):
+    def test_parse_missing_structured_fields_falls_through_to_plain(self):
+        """Missing target/prompt in structured JSON falls through to plain-text parse."""
         raw = {
             "id": "msg-1",
             "type": "dispatch",
             "content": json.dumps({"agent": "auditor"}),
         }
-        with pytest.raises(KeyError):
-            parse_dispatch(raw)
+        msg = parse_dispatch(raw)
+        # Falls through to plain-text handler: content becomes the prompt
+        assert msg.message_id == "msg-1"
+        assert msg.agent == "driver"  # default when no to_project
 
 
 class TestDispatchExecutor:

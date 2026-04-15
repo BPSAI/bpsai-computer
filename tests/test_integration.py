@@ -30,9 +30,17 @@ def config(workspace):
         workspace="bpsai",
         workspace_root=str(workspace),
         a2a_url=BASE,
+        paircoder_api_url=BASE,
         poll_interval=1,
         process_timeout=10,
         license_id="lic-test",
+    )
+
+
+def _mock_jwt_auth():
+    """Mock the operator-token endpoint for JWT auth."""
+    respx.post(f"{BASE}/api/v1/auth/operator-token").mock(
+        return_value=httpx.Response(200, json={"token": "fake-jwt", "expires_at": 9999999999})
     )
 
 
@@ -54,6 +62,7 @@ class TestFullDispatchFlow:
     @respx.mock
     async def test_poll_dispatch_ack_result(self, config, workspace):
         """Daemon polls, gets a dispatch, acks it, executes, and posts result."""
+        _mock_jwt_auth()
         # Mock A2A endpoints
         poll_calls = [0]
 
@@ -122,6 +131,7 @@ class TestOperatorFiltering:
     @respx.mock
     async def test_ignores_other_operator_messages(self, config):
         """Messages are filtered by the A2A query params, not client-side."""
+        _mock_jwt_auth()
         # The daemon sends operator=mike&workspace=bpsai in the query.
         # If A2A returns an empty list, daemon does nothing.
         respx.get(f"{BASE}/messages/feed").mock(
@@ -138,11 +148,13 @@ class TestOperatorFiltering:
         await asyncio.wait_for(daemon.run(), timeout=5.0)
 
         # Verify query params include correct operator/workspace filtering
-        request = respx.calls[0].request
-        url_str = str(request.url)
+        # Find the poll call (GET /messages/feed), not the auth call
+        poll_calls = [c for c in respx.calls if "messages/feed" in str(c.request.url)]
+        assert len(poll_calls) >= 1
+        url_str = str(poll_calls[0].request.url)
         assert "operator=mike" in url_str
         assert "workspace=bpsai" in url_str
-        assert "agent=computer" in url_str
+        assert "project=computer" in url_str
 
 
 class TestMissingRepoError:
@@ -151,6 +163,7 @@ class TestMissingRepoError:
     @respx.mock
     async def test_missing_repo_posts_error(self, config):
         """When target repo doesn't exist, daemon posts error result."""
+        _mock_jwt_auth()
         respx.get(f"{BASE}/messages/feed").mock(
             side_effect=[
                 httpx.Response(200, json={"messages": [_dispatch_message(target="nonexistent-repo")]}),

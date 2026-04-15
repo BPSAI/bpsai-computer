@@ -57,7 +57,7 @@ class BacklogDeliverer:
         import tempfile
 
         with tempfile.NamedTemporaryFile(
-            mode="w", suffix=".md", delete=False,
+            mode="w", suffix=".md", delete=False, encoding="utf-8",
         ) as f:
             f.write(md)
             f.flush()
@@ -123,7 +123,7 @@ class BacklogDeliverer:
                 success=False, path=dest, error=error,
             )
 
-        dest.write_text(md)
+        dest.write_text(md, encoding="utf-8")
 
         return DeliveryResult(
             success=True,
