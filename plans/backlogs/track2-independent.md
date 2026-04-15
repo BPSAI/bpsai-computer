@@ -1,24 +1,21 @@
-# Track 2 Independent — A2A Wiring + ABC Review + Contract Tests
+# Track 2 Independent — A2A Wiring + Schemas + Daemon Hardening
 
-> **Budget:** ~60-75cx
-> **Repos:** bpsai-a2a, paircoder_api, bpsai-computer, bpsai-framework (read-only)
+> **Budget:** ~53cx
+> **Repos:** bpsai-a2a, paircoder_api, bpsai-computer
 > **Sprint ID:** T2I
 > **Owner:** Mike
-> **Depends on:** Nothing (runs while David extracts Track 1)
-> **Feeds into:** Track 2 orchestration tasks (drafted after David's receiving modules land)
+> **Updated:** 2026-04-14 (removed T2I.1 — Track 1 landed, ABC gaps fold into orchestration backlog)
+> **Feeds into:** Track 2 orchestration backlog (to be drafted — see notes below)
 
 ---
 
 ## Context
 
-Track 2 (Computer Orchestration, ~150cx) depends on Track 1 extraction code landing in bpsai-computer. But several pieces can start now:
+Track 1 extraction is complete (`4e8a977`). All execution-layer code now lives in bpsai-computer with 526 tests passing. This backlog covers the A2A endpoints, schemas, and daemon hardening needed before the orchestration wiring backlog can execute.
 
-1. **A2A endpoints** that Track 2 and CCH both need
-2. **Framework ABC review** to flag gaps to David before he extracts (Risk R9)
-3. **Message schema contracts** to prevent the 4-mismatch pattern from Phase A (Risk R7)
-4. **Permission manifest support** in A2A for D-024 channel escalation (Risk R4)
-
-This backlog covers Mike's independent work while David runs FW-C1.x through FW-C2.x.
+**What changed since v1:**
+- T2I.1 (Framework ABC review) removed — extraction landed, the code is in computer and can be adapted in place. Gaps fold into the orchestration backlog as adaptation tasks.
+- Phase 1 now starts with T2I.3 (schemas) since that's the foundation for everything.
 
 ---
 
@@ -28,36 +25,11 @@ This backlog covers Mike's independent work while David runs FW-C1.x through FW-
 |------|---------|------------|
 | R4 (.claude/ path blocks) | T2I.5 | Channel escalation routing in A2A |
 | R7 (schema mismatches) | T2I.3 | Shared message schemas + contract tests |
-| R9 (ABCs insufficient) | T2I.1 | Review and flag gaps before extraction |
 | R3 (session-resume blocks CCH.5) | T2I.2 | Build endpoint early |
 
 ---
 
-### Phase 1: ABC Review + Schema Contracts
-
-### T2I.1 — Framework ABC review for Computer fitness | Cx: 8 | P0
-
-**Description:** Review all framework abstractions that Track 1 will extract into bpsai-computer and assess fitness for Computer's orchestration needs. Produce a gap report for David so he can extend ABCs during extraction rather than after.
-
-Known gaps from initial analysis:
-- **NavigatorOrchestrator:** Hard dep on BacklogDeliverer, no injectable decision logic, synchronous only
-- **Dispatcher:** Fire-and-forget, no lifecycle/streaming interface
-- **CompletionDetector:** Poll-only (channel or git), no streaming/webhook
-- **StatusUpdater:** Sequential, no async update/notification
-- **HeadlessHook/PathClass:** Hardcoded working area paths, not extensible
-- **NextSprintAuthor:** Hardcoded task ID format (`T{prefix}.{seq}`), non-parameterizable phase logic
-- **BacklogParser:** Strict regex patterns, no programmatic backlog building API
-
-Assess each gap: is it a blocker (must fix before extraction), a follow-up (Computer wraps it), or not applicable (Computer reimplements locally)?
-
-**AC:**
-- [ ] Gap report written to `bpsai-computer/docs/design/framework-abc-review.md`
-- [ ] Each gap classified as blocker / wrap / reimplement
-- [ ] Blockers filed as issues on bpsai-framework with tag `phase-c`
-- [ ] David has reviewed and acknowledged the gap report
-- [ ] No surprise gaps surface during Track 2 wiring
-
----
+### Phase 1: Schema Contracts
 
 ### T2I.3 — Shared message schema definitions | Cx: 10 | P0
 
@@ -117,6 +89,21 @@ This removes the security gap where any paircoder-api token with `purpose: "oper
 
 ---
 
+### T2I.8 — Daemon multi-message-type support | Cx: 5 | P0
+
+**Description:** The daemon currently handles `dispatch` and `resume` message types. Track 2 adds `plan-proposal`, `permission-request`, `permission-response`, and potentially `review-request`. The dispatcher's `_parse_dispatch` method needs to be a proper message type router rather than a conditional chain.
+
+**AC:**
+- [ ] Dispatcher has a registry of message type handlers
+- [ ] Adding a new message type is: define handler function + register it
+- [ ] Unknown message types are logged and acked (not silently dropped, not crashed)
+- [ ] Existing dispatch and resume flows unchanged
+- [ ] Tests cover each registered message type
+
+---
+
+### Phase 3: CC Unblock Endpoints
+
 ### T2I.5 — Channel escalation routing (D-024) | Cx: 8 | P1
 
 **Description:** When a driver hits a permission wall on non-`.claude/` paths, it sends an A2A channel message requesting escalation. A2A needs to route this to the appropriate approval authority (Navigator or human operator). D-024 Hybrid E+F — this is the "F" part (channel escalation at runtime).
@@ -162,26 +149,10 @@ New message flow:
 
 ---
 
-## Phase 3: Computer Daemon Hardening
-
-### T2I.8 — Daemon multi-message-type support | Cx: 5 | P0
-
-**Description:** The daemon currently handles `dispatch` and `resume` message types. Track 2 adds `plan-proposal`, `permission-request`, `permission-response`, and potentially `review-request`. The dispatcher's `_parse_dispatch` method needs to be a proper message type router rather than a conditional chain.
-
-**AC:**
-- [ ] Dispatcher has a registry of message type handlers
-- [ ] Adding a new message type is: define handler function + register it
-- [ ] Unknown message types are logged and acked (not silently dropped, not crashed)
-- [ ] Existing dispatch and resume flows unchanged
-- [ ] Tests cover each registered message type
-
----
-
 ## Summary
 
 | Task | Title | Cx | Priority | Repo | Risk |
 |------|-------|----|----------|------|------|
-| T2I.1 | Framework ABC review | 8 | P0 | bpsai-computer (output) | R9 |
 | T2I.2 | Session-resume message type | 8 | P0 | bpsai-a2a + bpsai-computer | R3 |
 | T2I.3 | Shared message schemas | 10 | P0 | bpsai-a2a (primary) | R7 |
 | T2I.4 | License-to-org lookup | 12 | P0 | bpsai-a2a + paircoder_api | — |
@@ -189,13 +160,12 @@ New message flow:
 | T2I.6 | Notification severity routing | 5 | P1 | bpsai-a2a | — |
 | T2I.7 | Workspace listing endpoint | 5 | P1 | paircoder_api | — |
 | T2I.8 | Daemon message type router | 5 | P0 | bpsai-computer | — |
-| **Total** | | **~61** | | | |
+| **Total** | | **~53** | | | |
 
 ### Execution Order
 
 ```
-Phase 1 (no deps, start immediately):
-  T2I.1 (ABC review) — output feeds David's extraction decisions
+Phase 1 (start immediately):
   T2I.3 (shared schemas) — foundation for all A2A work below
 
 Phase 2 (after T2I.3 schemas exist):
@@ -208,13 +178,3 @@ Phase 3 (after Phase 2 endpoints exist):
   T2I.6 (notification severity) — unblocks CCH.7
   T2I.7 (workspace listing) — unblocks CCH.9
 ```
-
-### Handoff to Track 2 Orchestration
-
-When David's FW-C1.x and FW-C2.x extraction tasks land and receiving modules exist in bpsai-computer, a second backlog will be drafted covering the orchestration wiring:
-- Navigator orchestration using extracted NavigatorOrchestrator
-- Backlog parsing + sprint authoring using extracted planners
-- Dispatch routing + operator assignment using extracted dispatch
-- Status updater + review automation using extracted status code
-
-That backlog will incorporate findings from T2I.1 (ABC review) and use the schemas from T2I.3.
