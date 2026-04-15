@@ -1,15 +1,93 @@
 # Current State
 
-> Last updated: 2026-04-08
+> Last updated: 2026-04-15
 
-## Status: DWC Sprint In Progress
+## Status: Track 2 Independent Sprint In Progress
 
 ## Active Plan
 
-**Plan:** plan-sprint-0-engage
-**Current Sprint:** DWC — Per-workspace Daemon Configs
+**Plan:** plan-sprint-2-engage
+**Current Sprint:** T2I — Track 2 Independent
 
 ## What Was Just Done
+
+- **T2I.7 done** (2026-04-15)
+
+- **T2I.7 COMPLETE** — Workspace listing endpoint (paircoder_api + bpsai-computer)
+  - ✓ `Workspace` SQLAlchemy model: workspace_id, name, workspace_root (optional), status, org_id
+  - ✓ `WorkspaceStatus` enum: active, inactive, archived
+  - ✓ `GET /workspaces` route with JWT auth, scoped by org_id from claims
+  - ✓ `require_jwt` dependency: validates both operator JWT (iss=paircoder-api) and portal JWT (iss=bpsai-portal)
+  - ✓ `WorkspaceService.list_for_org()` — returns non-archived workspaces sorted by name
+  - ✓ `WorkspaceInfo` Pydantic contract in bpsai-computer contracts
+  - ✓ Response: `{workspaces: [{workspace_id, name, workspace_root, status}]}`
+  - ✓ Missing org_id in JWT returns 400
+  - ✓ 14 paircoder_api tests (model, auth, route), 4 bpsai-computer contract tests
+  - ✓ 1,409/1,409 paircoder_api tests passing (excl. 5 pre-existing failures), 24/24 contract tests passing
+
+- **T2I.6 done** (auto-updated by hook)
+
+- **T2I.6 done** (2026-04-15)
+
+- **T2I.6 COMPLETE** — Notification severity routing (bpsai-computer + bpsai-a2a)
+  - ✓ `Severity` StrEnum in contracts: info, warning, error, critical
+  - ✓ `SEVERITY_ORDER` dict and `severities_at_or_above()` threshold utility
+  - ✓ `ChannelEnvelope.severity` defaults to `"info"` (was None), validated against enum
+  - ✓ `GET /messages/feed` accepts `min_severity` query param for threshold filtering
+  - ✓ Null-severity messages treated as `info` in threshold queries
+  - ✓ `severity` exact-match takes precedence when both params provided
+  - ✓ Invalid `min_severity` returns 400
+  - ✓ 19 new contract tests (bpsai-computer), 7 new feed severity tests (bpsai-a2a)
+  - ✓ 89/89 contract+client tests passing, 346/346 a2a tests passing (excl. pre-existing migration failure)
+
+- **T2I.5 done** (auto-updated by hook)
+
+- **T2I.5 done** (2026-04-15)
+
+- **T2I.5 COMPLETE** — Channel escalation routing (bpsai-computer)
+  - ✓ `PermissionRequestContent` Pydantic model: `path`, `operation` (read/write/execute), `reason`, `task_id`
+  - ✓ `PermissionResponseContent` Pydantic model: `approved` (bool), `scope` (file/directory/glob), `ttl` (seconds), `request_id` (optional)
+  - ✓ Field validators: operation must be read/write/execute, scope must be file/directory/glob, ttl >= 0
+  - ✓ Both models exported in `contracts/__init__.py` and registered in `schema_export.py` for cross-repo validation
+  - ✓ `A2AClient.post_permission_request()` — POST /messages with type=permission-request
+  - ✓ `A2AClient.post_permission_response()` — POST /messages with type=permission-response
+  - ✓ `poll_dispatches()` now includes permission-response in poll filter (daemon receives responses)
+  - ✓ Daemon registers `permission-response` handler by default, acks with "permission-noted"
+  - ✓ Malformed permission-response content logged as warning, not crash
+  - ✓ 22 new contract tests + 15 new escalation tests (A2A client + daemon routing)
+  - ✓ 607/607 tests passing, arch check: daemon.py import violation is pre-existing
+
+- **T2I.8 done** (2026-04-15)
+
+- **T2I.8 COMPLETE** — Daemon multi-message-type support (bpsai-computer)
+  - ✓ `_message_handlers` registry dict on Daemon, populated with dispatch/resume at init
+  - ✓ `register_message_handler(type, handler)` — adding a new type is define + register
+  - ✓ `_route_message()` replaces if/else chain in `run()` loop
+  - ✓ Unknown message types: logged as warning + acked as `unsupported_message_type`
+  - ✓ Existing dispatch and resume flows unchanged (35 existing tests still pass)
+  - ✓ 12 new tests: registry structure (5), routing (4), unknown type handling (3)
+  - ✓ 47/47 tests passing, arch check clean on test file (daemon.py has pre-existing import violation)
+
+- **T2I.3 done** (2026-04-14)
+
+- **T2I.3 COMPLETE** — Shared message schema definitions (bpsai-computer)
+  - ✓ `src/computer/contracts/` package with Pydantic v2 models as single source of truth
+  - ✓ All existing A2A message types: ChannelEnvelope, DispatchContent, ResumeContent, DispatchResultContent, SessionStarted/Complete/Failed, SessionOutput, SignalBatch, Heartbeat
+  - ✓ Phase C types defined: PlanProposalContent, DriverStatusContent, ReviewResultContent, SessionResumeContent
+  - ✓ JSON Schema export via `all_schemas()` for cross-repo validation
+  - ✓ 32 new contract tests (20 existing types + 12 Phase C/export), 558/558 passing
+  - ✓ Arch check clean on all new files
+
+- **DBS.1 done** (2026-04-09)
+
+- **DBS.1 COMPLETE** — Update collectors to use /signals/batch (bpsai-computer)
+  - ✓ SignalPusher, GitSummaryCollector, CISummaryCollector POST to `/signals/batch`
+  - ✓ Payload format: `{operator, repo, signals: [{signal_type, severity, timestamp, payload, signal_id}]}`
+  - ✓ Deterministic `signal_id` via SHA-256 hash of signal content (16 hex chars)
+  - ✓ Timestamps normalized to `YYYY-MM-DDTHH:MM:SSZ` (canonical UTC, no microseconds)
+  - ✓ Fire-and-forget preserved — batch failure logged, doesn't block daemon
+  - ✓ Tests updated: 61 collector tests passing, arch check clean
+  - ✓ 2 new tests: deterministic signal_id, different signals get different IDs
 
 - **DWC.2 done** (2026-04-08)
 
@@ -90,13 +168,13 @@
 
 ## What's Next
 
-1. DWC.3 — Next task in DWC sprint (if any)
+1. DBS.2 — Next task in DBS sprint (if any)
 2. Branch protection setup (BPSAI/paircoder#121)
 
 ```yaml
 project: bpsai-computer
 status: in_progress
 tests: 235+ (bpsai-computer)
-sprints_done: [CD1, CD2, CD2-FIX, CD3]
-sprint_active: DWC
+sprints_done: [CD1, CD2, CD2-FIX, CD3, DWC]
+sprint_active: DBS
 ```

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import json
 import logging
 import platform
 import re
@@ -13,14 +14,18 @@ from collections import OrderedDict
 from pathlib import Path
 from typing import Awaitable, Callable
 
+from pydantic import ValidationError
+
 from computer.a2a_client import A2AClient
 from computer.auth import TokenManager
 from computer.ci_collector import CISummaryCollector
 from computer.config import DaemonConfig
+from computer.contracts.messages import PermissionResponseContent
 from computer.dispatcher import DispatchExecutor, DispatchResult, parse_dispatch, parse_resume
 from computer.git_collector import GitSummaryCollector
 from computer.license_discovery import LicenseDiscoveryError, discover_license_id
 from computer.lifecycle import SessionLifecycle, extract_session_id
+from computer.scrubber import scrub_credentials
 from computer.signal_pusher import SignalPusher
 from computer.streamer import OutputStreamer
 
@@ -49,6 +54,9 @@ class Daemon:
         self.config = config
         self.running = False
         self._processed_ids: OrderedDict[str, None] = OrderedDict()
+        self._pending_permission_requests: set[str] = set()
+        self._message_handlers: dict[str, Callable[[dict], Awaitable[None]]] = {}
+        self._register_default_handlers()
 
         # Resolve license_id: config value wins, then auto-discover from file
         license_id: str | None = None
@@ -83,6 +91,33 @@ class Daemon:
         self.ci_collector = CISummaryCollector(config=config, token_manager=token_manager)
         if not config.a2a_url.startswith("https://"):
             log.warning("a2a_url is not HTTPS: %s — traffic will be unencrypted", config.a2a_url)
+
+    def _register_default_handlers(self) -> None:
+        """Register built-in message type handlers."""
+        self._message_handlers["dispatch"] = lambda raw: self._process_dispatch(raw)
+        self._message_handlers["resume"] = lambda raw: self._process_resume(raw)
+        self._message_handlers["permission-response"] = lambda raw: self._process_permission_response(raw)
+
+    def register_message_handler(
+        self, message_type: str, handler: Callable[[dict], Awaitable[None]],
+    ) -> None:
+        """Register a handler for a message type. Replaces any existing handler."""
+        self._message_handlers[message_type] = handler
+
+    async def _route_message(self, raw_msg: dict) -> None:
+        """Route a message to its registered handler, or ack-and-log if unknown."""
+        msg_id = raw_msg.get("id", "")
+        if not msg_id:
+            log.warning("Skipping message with missing or empty id: %s", raw_msg.get("type", "?"))
+            return
+        msg_type = raw_msg.get("type", "dispatch")
+        handler = self._message_handlers.get(msg_type)
+        if handler is not None:
+            await handler(raw_msg)
+        else:
+            msg_id = raw_msg.get("id", "")
+            log.warning("Unknown message type %r (id=%s) — acking as unsupported", msg_type, msg_id)
+            await self.a2a.ack_message(msg_id, response="unsupported_message_type")
 
     def shutdown(self) -> None:
         log.info("Shutdown requested")
@@ -164,6 +199,9 @@ class Daemon:
         await self.a2a.ack_message(msg.message_id, response="dispatched")
         preliminary_session_id = str(uuid.uuid4())
         command = f"claude -p {shlex.quote(msg.prompt)} --dangerously-skip-permissions"
+        command = scrub_credentials(command)
+        if len(command) > 1000:
+            command = command[:1000] + "... [truncated]"
 
         session_id, result = await self._execute_with_lifecycle(
             message_id=msg.message_id,
@@ -198,6 +236,43 @@ class Daemon:
         )
         log.info("Resume %s complete: success=%s session=%s", msg.message_id, result.success, session_id)
 
+    async def _process_permission_response(self, raw_msg: dict) -> None:
+        """Process a permission-response: validate sender, parse via Pydantic, ack."""
+        msg_id = raw_msg.get("id", "")
+
+        # SEC-001: Verify operator matches
+        msg_operator = raw_msg.get("operator", "")
+        if msg_operator != self.config.operator:
+            log.warning(
+                "Permission-response operator mismatch: %r != %s (id=%s)",
+                msg_operator, self.config.operator, msg_id,
+            )
+            return
+
+        # SEC-002: Parse content through Pydantic model
+        try:
+            raw_content = json.loads(raw_msg.get("content", "{}"))
+            content = PermissionResponseContent.model_validate(raw_content)
+        except (json.JSONDecodeError, ValidationError) as exc:
+            log.error("Invalid permission-response content id=%s: %s", msg_id, exc)
+            return
+
+        # SEC-001: Verify request_id was pending
+        request_id = content.request_id or ""
+        if request_id not in self._pending_permission_requests:
+            log.warning(
+                "Permission-response for unknown request_id=%s (id=%s)",
+                request_id, msg_id,
+            )
+            return
+        self._pending_permission_requests.discard(request_id)
+
+        log.info(
+            "Permission response id=%s: approved=%s scope=%s ttl=%s request_id=%s",
+            msg_id, content.approved, content.scope, content.ttl, request_id,
+        )
+        await self.a2a.ack_message(msg_id, response="permission-noted")
+
     async def _heartbeat_loop(self) -> None:
         """Send heartbeats every 30s while a dispatch is running."""
         while True:
@@ -220,10 +295,7 @@ class Daemon:
                     self._processed_ids[msg_id] = None
                     if len(self._processed_ids) > _MAX_PROCESSED_IDS:
                         self._processed_ids.popitem(last=False)
-                    if raw_msg.get("type") == "resume":
-                        await self._process_resume(raw_msg)
-                    else:
-                        await self._process_dispatch(raw_msg)
+                    await self._route_message(raw_msg)
                 try:
                     await self.signal_pusher.push_signals()
                 except Exception as exc:

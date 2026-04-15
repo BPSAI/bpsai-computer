@@ -46,6 +46,8 @@ class A2AClient:
         """Close the underlying HTTP client."""
         await self._http.aclose()
 
+    _POLL_TYPES = frozenset({"dispatch", "resume", "permission-response"})
+
     async def poll_dispatches(self) -> list[dict]:
         """GET /messages/feed with dispatch filters. Returns [] on error."""
         params = {
@@ -60,7 +62,7 @@ class A2AClient:
             resp.raise_for_status()
             data = resp.json()
             messages = data.get("messages", [])
-            return [m for m in messages if m.get("type") in ("dispatch", "resume")]
+            return [m for m in messages if m.get("type") in self._POLL_TYPES]
         except (httpx.HTTPError, Exception) as exc:
             log.warning("Poll failed: %s", exc)
             return []
@@ -154,6 +156,60 @@ class A2AClient:
             resp.raise_for_status()
         except (httpx.HTTPError, Exception) as exc:
             log.warning("Post lifecycle %s failed for %s: %s", event_type, session_id, exc)
+
+    async def post_permission_request(
+        self,
+        path: str,
+        operation: str,
+        reason: str,
+        task_id: str,
+    ) -> None:
+        """POST /messages with type=permission-request."""
+        payload = {
+            "type": "permission-request",
+            "from_project": "bpsai-computer",
+            "to_project": "computer",
+            "operator": self.operator,
+            "workspace": self.workspace,
+            "content": json.dumps({
+                "path": path,
+                "operation": operation,
+                "reason": reason,
+                "task_id": task_id,
+            }),
+        }
+        try:
+            headers = await self._auth_headers()
+            resp = await self._http.post(f"{self.base_url}/messages", json=payload, headers=headers)
+            resp.raise_for_status()
+        except (httpx.HTTPError, Exception) as exc:
+            log.warning("Post permission-request failed: %s", exc)
+
+    async def post_permission_response(
+        self,
+        approved: bool,
+        scope: str,
+        ttl: int,
+        request_id: str | None = None,
+    ) -> None:
+        """POST /messages with type=permission-response."""
+        content: dict = {"approved": approved, "scope": scope, "ttl": ttl}
+        if request_id is not None:
+            content["request_id"] = request_id
+        payload = {
+            "type": "permission-response",
+            "from_project": "bpsai-computer",
+            "to_project": "computer",
+            "operator": self.operator,
+            "workspace": self.workspace,
+            "content": json.dumps(content),
+        }
+        try:
+            headers = await self._auth_headers()
+            resp = await self._http.post(f"{self.base_url}/messages", json=payload, headers=headers)
+            resp.raise_for_status()
+        except (httpx.HTTPError, Exception) as exc:
+            log.warning("Post permission-response failed: %s", exc)
 
     async def heartbeat(self) -> None:
         """POST heartbeat to /agents/bpsai-computer/heartbeat."""
