@@ -121,7 +121,7 @@ class TestSessionOutputContent:
 class TestSignalBatchItem:
     def test_valid(self):
         item = SignalBatchItem(
-            signal_type="test-pass", severity="low",
+            signal_type="test-pass", severity="warning",
             timestamp="2026-04-14T12:00:00Z", payload={"count": 42},
         )
         assert item.signal_type == "test-pass"
@@ -129,7 +129,7 @@ class TestSignalBatchItem:
 
     def test_with_signal_id(self):
         item = SignalBatchItem(
-            signal_type="test-pass", severity="low",
+            signal_type="test-pass", severity="warning",
             timestamp="2026-04-14T12:00:00Z", payload={}, signal_id="abc123",
         )
         assert item.signal_id == "abc123"
@@ -139,7 +139,7 @@ class TestSignalBatchRequest:
     def test_valid(self):
         req = SignalBatchRequest(
             operator="mike", repo="bpsai-a2a",
-            signals=[SignalBatchItem(signal_type="ci-pass", severity="low", timestamp="2026-04-14T12:00:00Z", payload={})],
+            signals=[SignalBatchItem(signal_type="ci-pass", severity="warning", timestamp="2026-04-14T12:00:00Z", payload={})],
         )
         assert req.operator == "mike"
         assert len(req.signals) == 1

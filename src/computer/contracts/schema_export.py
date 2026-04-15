@@ -20,6 +20,7 @@ from computer.contracts.messages import (
     SessionStartedContent,
     SignalBatchItem,
     SignalBatchRequest,
+    WorkspaceInfo,
 )
 
 _ALL_MODELS = {
@@ -40,6 +41,7 @@ _ALL_MODELS = {
     "SessionResumeContent": SessionResumeContent,
     "PermissionRequestContent": PermissionRequestContent,
     "PermissionResponseContent": PermissionResponseContent,
+    "WorkspaceInfo": WorkspaceInfo,
 }
 
 

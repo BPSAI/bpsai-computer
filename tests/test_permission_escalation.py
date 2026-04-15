@@ -214,9 +214,13 @@ class TestDaemonPermissionResponseHandler:
 
     async def test_permission_response_routed_to_handler(self, daemon):
         """A permission-response message is routed to its handler."""
+        # Pre-register the request_id so SEC-001 pending check passes
+        daemon._pending_permission_requests.add("msg-pr-1")
+
         raw_msg = {
             "id": "msg-pres-1",
             "type": "permission-response",
+            "operator": daemon.config.operator,
             "content": json.dumps({
                 "approved": True, "scope": "file", "ttl": 3600,
                 "request_id": "msg-pr-1",
@@ -246,11 +250,16 @@ class TestDaemonPermissionResponseHandler:
 
     async def test_permission_response_denied_is_acked(self, daemon):
         """A denied permission-response is still acked."""
+        # Pre-register the request_id so SEC-001 pending check passes
+        daemon._pending_permission_requests.add("msg-pr-deny")
+
         raw_msg = {
             "id": "msg-pres-2",
             "type": "permission-response",
+            "operator": daemon.config.operator,
             "content": json.dumps({
                 "approved": False, "scope": "file", "ttl": 0,
+                "request_id": "msg-pr-deny",
             }),
         }
 
@@ -282,6 +291,7 @@ class TestDaemonPermissionResponseHandler:
         raw_msg = {
             "id": "msg-pres-bad",
             "type": "permission-response",
+            "operator": daemon.config.operator,
             "content": "not-json",
         }
 

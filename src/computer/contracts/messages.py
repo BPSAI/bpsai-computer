@@ -8,7 +8,9 @@ Phase C types: plan-proposal, driver-status, review-result, session-resume.
 
 from __future__ import annotations
 
+import json as _json
 from enum import StrEnum
+from typing import Any
 
 from pydantic import BaseModel, Field, field_validator
 
@@ -41,6 +43,20 @@ def severities_at_or_above(min_severity: str) -> set[str]:
 # -- Channel envelope (wraps all messages) -----------------------------------
 
 
+_MAX_DICT_BYTES = 4096
+
+
+def _validate_dict_size(v: dict[str, Any], field_name: str = "dict") -> dict[str, Any]:
+    """Reject dicts whose JSON serialisation exceeds _MAX_DICT_BYTES."""
+    raw = _json.dumps(v, separators=(",", ":"), default=str)
+    if len(raw.encode()) > _MAX_DICT_BYTES:
+        raise ValueError(
+            f"{field_name} exceeds {_MAX_DICT_BYTES}-byte limit "
+            f"({len(raw.encode())} bytes)"
+        )
+    return v
+
+
 def _validate_severity(v: str) -> str:
     if v not in SEVERITY_LEVELS:
         raise ValueError(f"severity must be one of {sorted(SEVERITY_LEVELS)}, got {v!r}")
@@ -55,7 +71,7 @@ class ChannelEnvelope(BaseModel):
     to_project: str = Field(..., max_length=128)
     content: str = Field(..., max_length=10_000)
     severity: str = Field("info", max_length=32)
-    metadata: dict = Field(default_factory=dict)
+    metadata: dict[str, Any] = Field(default_factory=dict)
     operator: str | None = Field(None, max_length=64)
     org_id: str | None = Field(None, max_length=128)
     workspace: str | None = Field(None, max_length=64)
@@ -64,6 +80,11 @@ class ChannelEnvelope(BaseModel):
     @classmethod
     def check_severity(cls, v: str) -> str:
         return _validate_severity(v)
+
+    @field_validator("metadata")
+    @classmethod
+    def check_metadata_size(cls, v: dict[str, Any]) -> dict[str, Any]:
+        return _validate_dict_size(v, "metadata")
 
 
 # -- Existing message content types -----------------------------------------
@@ -148,9 +169,19 @@ class SignalBatchItem(BaseModel):
     signal_type: str = Field(..., max_length=64)
     severity: str = Field(..., max_length=32)
     timestamp: str = Field(..., max_length=64)
-    payload: dict = Field(default_factory=dict)
+    payload: dict[str, Any] = Field(default_factory=dict)
     source: str = Field("", max_length=64)
     signal_id: str | None = Field(None, max_length=128)
+
+    @field_validator("severity")
+    @classmethod
+    def check_severity(cls, v: str) -> str:
+        return _validate_severity(v)
+
+    @field_validator("payload")
+    @classmethod
+    def check_payload_size(cls, v: dict[str, Any]) -> dict[str, Any]:
+        return _validate_dict_size(v, "payload")
 
 
 class SignalBatchRequest(BaseModel):
@@ -170,7 +201,12 @@ class HeartbeatRequest(BaseModel):
     state: str = Field(..., max_length=32)
     current_task: str | None = Field(None, max_length=500)
     interval_minutes: int = Field(10, ge=1, le=1440)
-    metadata: dict = Field(default_factory=dict)
+    metadata: dict[str, Any] = Field(default_factory=dict)
+
+    @field_validator("metadata")
+    @classmethod
+    def check_metadata_size(cls, v: dict[str, Any]) -> dict[str, Any]:
+        return _validate_dict_size(v, "metadata")
 
 
 # -- Phase C message types (new) --------------------------------------------
@@ -185,6 +221,9 @@ class PlanProposalContent(BaseModel):
     estimated_budget: int = Field(..., ge=0)
 
 
+_VALID_DRIVER_STATUSES = frozenset({"pending", "in_progress", "complete", "failed", "blocked"})
+
+
 class DriverStatusContent(BaseModel):
     """Content of a driver-status message (Driver -> CC)."""
 
@@ -193,6 +232,18 @@ class DriverStatusContent(BaseModel):
     status: str = Field(..., max_length=32)
     progress_pct: int | None = Field(None, ge=0, le=100)
     current_step: str | None = Field(None, max_length=500)
+
+    @field_validator("status")
+    @classmethod
+    def check_status(cls, v: str) -> str:
+        if v not in _VALID_DRIVER_STATUSES:
+            raise ValueError(
+                f"status must be one of {sorted(_VALID_DRIVER_STATUSES)}, got {v!r}"
+            )
+        return v
+
+
+_VALID_VERDICTS = frozenset({"approved", "changes_requested", "rejected"})
 
 
 class ReviewResultContent(BaseModel):
@@ -203,6 +254,15 @@ class ReviewResultContent(BaseModel):
     verdict: str = Field(..., max_length=32)
     comments: list[str] = Field(default_factory=list)
     issues: list[str] = Field(default_factory=list)
+
+    @field_validator("verdict")
+    @classmethod
+    def check_verdict(cls, v: str) -> str:
+        if v not in _VALID_VERDICTS:
+            raise ValueError(
+                f"verdict must be one of {sorted(_VALID_VERDICTS)}, got {v!r}"
+            )
+        return v
 
 
 class SessionResumeContent(BaseModel):
