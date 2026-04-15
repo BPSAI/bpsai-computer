@@ -5,6 +5,8 @@ Command Center, daemon (bpsai-computer), and A2A backend.
 """
 
 from computer.contracts.messages import (
+    SEVERITY_LEVELS,
+    SEVERITY_ORDER,
     ChannelEnvelope,
     DispatchContent,
     DispatchResultContent,
@@ -16,6 +18,7 @@ from computer.contracts.messages import (
     PlanProposalContent,
     ResumeContent,
     ReviewResultContent,
+    Severity,
     SessionCompleteContent,
     SessionFailedContent,
     SessionOutputContent,
@@ -23,10 +26,13 @@ from computer.contracts.messages import (
     SessionStartedContent,
     SignalBatchItem,
     SignalBatchRequest,
+    severities_at_or_above,
 )
 from computer.contracts.schema_export import all_schemas
 
 __all__ = [
+    "SEVERITY_LEVELS",
+    "SEVERITY_ORDER",
     "ChannelEnvelope",
     "DispatchContent",
     "DispatchResultContent",
@@ -38,6 +44,7 @@ __all__ = [
     "PlanProposalContent",
     "ResumeContent",
     "ReviewResultContent",
+    "Severity",
     "SessionCompleteContent",
     "SessionFailedContent",
     "SessionOutputContent",
@@ -46,4 +53,5 @@ __all__ = [
     "SignalBatchItem",
     "SignalBatchRequest",
     "all_schemas",
+    "severities_at_or_above",
 ]

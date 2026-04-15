@@ -11,6 +11,21 @@
 
 ## What Was Just Done
 
+- **T2I.6 done** (2026-04-15)
+
+- **T2I.6 COMPLETE** — Notification severity routing (bpsai-computer + bpsai-a2a)
+  - ✓ `Severity` StrEnum in contracts: info, warning, error, critical
+  - ✓ `SEVERITY_ORDER` dict and `severities_at_or_above()` threshold utility
+  - ✓ `ChannelEnvelope.severity` defaults to `"info"` (was None), validated against enum
+  - ✓ `GET /messages/feed` accepts `min_severity` query param for threshold filtering
+  - ✓ Null-severity messages treated as `info` in threshold queries
+  - ✓ `severity` exact-match takes precedence when both params provided
+  - ✓ Invalid `min_severity` returns 400
+  - ✓ 19 new contract tests (bpsai-computer), 7 new feed severity tests (bpsai-a2a)
+  - ✓ 89/89 contract+client tests passing, 346/346 a2a tests passing (excl. pre-existing migration failure)
+
+- **T2I.5 done** (auto-updated by hook)
+
 - **T2I.5 done** (2026-04-15)
 
 - **T2I.5 COMPLETE** — Channel escalation routing (bpsai-computer)

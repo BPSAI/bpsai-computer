@@ -8,10 +8,43 @@ Phase C types: plan-proposal, driver-status, review-result, session-resume.
 
 from __future__ import annotations
 
+from enum import StrEnum
+
 from pydantic import BaseModel, Field, field_validator
 
 
+# -- Severity levels -----------------------------------------------------------
+
+
+class Severity(StrEnum):
+    """Message severity levels, ordered from least to most severe."""
+
+    INFO = "info"
+    WARNING = "warning"
+    ERROR = "error"
+    CRITICAL = "critical"
+
+
+SEVERITY_LEVELS: set[str] = {s.value for s in Severity}
+
+SEVERITY_ORDER: dict[str, int] = {s.value: i for i, s in enumerate(Severity)}
+
+
+def severities_at_or_above(min_severity: str) -> set[str]:
+    """Return all severity levels at or above the given threshold."""
+    threshold = SEVERITY_ORDER.get(min_severity)
+    if threshold is None:
+        raise ValueError(f"Unknown severity: {min_severity!r}")
+    return {s for s, rank in SEVERITY_ORDER.items() if rank >= threshold}
+
+
 # -- Channel envelope (wraps all messages) -----------------------------------
+
+
+def _validate_severity(v: str) -> str:
+    if v not in SEVERITY_LEVELS:
+        raise ValueError(f"severity must be one of {sorted(SEVERITY_LEVELS)}, got {v!r}")
+    return v
 
 
 class ChannelEnvelope(BaseModel):
@@ -21,11 +54,16 @@ class ChannelEnvelope(BaseModel):
     from_project: str = Field(..., max_length=128)
     to_project: str = Field(..., max_length=128)
     content: str = Field(..., max_length=10_000)
-    severity: str | None = Field(None, max_length=32)
+    severity: str = Field("info", max_length=32)
     metadata: dict = Field(default_factory=dict)
     operator: str | None = Field(None, max_length=64)
     org_id: str | None = Field(None, max_length=128)
     workspace: str | None = Field(None, max_length=64)
+
+    @field_validator("severity")
+    @classmethod
+    def check_severity(cls, v: str) -> str:
+        return _validate_severity(v)
 
 
 # -- Existing message content types -----------------------------------------

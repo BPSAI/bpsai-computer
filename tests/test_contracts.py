@@ -166,5 +166,5 @@ class TestChannelEnvelope:
             operator="mike", workspace="bpsai",
         )
         assert env.type == "dispatch"
-        assert env.severity is None
+        assert env.severity == "info"
         assert env.metadata == {}
