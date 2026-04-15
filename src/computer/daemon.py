@@ -14,14 +14,18 @@ from collections import OrderedDict
 from pathlib import Path
 from typing import Awaitable, Callable
 
+from pydantic import ValidationError
+
 from computer.a2a_client import A2AClient
 from computer.auth import TokenManager
 from computer.ci_collector import CISummaryCollector
 from computer.config import DaemonConfig
+from computer.contracts.messages import PermissionResponseContent
 from computer.dispatcher import DispatchExecutor, DispatchResult, parse_dispatch, parse_resume
 from computer.git_collector import GitSummaryCollector
 from computer.license_discovery import LicenseDiscoveryError, discover_license_id
 from computer.lifecycle import SessionLifecycle, extract_session_id
+from computer.scrubber import scrub_credentials
 from computer.signal_pusher import SignalPusher
 from computer.streamer import OutputStreamer
 
@@ -50,6 +54,7 @@ class Daemon:
         self.config = config
         self.running = False
         self._processed_ids: OrderedDict[str, None] = OrderedDict()
+        self._pending_permission_requests: set[str] = set()
         self._message_handlers: dict[str, Callable[[dict], Awaitable[None]]] = {}
         self._register_default_handlers()
 
@@ -101,6 +106,10 @@ class Daemon:
 
     async def _route_message(self, raw_msg: dict) -> None:
         """Route a message to its registered handler, or ack-and-log if unknown."""
+        msg_id = raw_msg.get("id", "")
+        if not msg_id:
+            log.warning("Skipping message with missing or empty id: %s", raw_msg.get("type", "?"))
+            return
         msg_type = raw_msg.get("type", "dispatch")
         handler = self._message_handlers.get(msg_type)
         if handler is not None:
@@ -190,6 +199,9 @@ class Daemon:
         await self.a2a.ack_message(msg.message_id, response="dispatched")
         preliminary_session_id = str(uuid.uuid4())
         command = f"claude -p {shlex.quote(msg.prompt)} --dangerously-skip-permissions"
+        command = scrub_credentials(command)
+        if len(command) > 1000:
+            command = command[:1000] + "... [truncated]"
 
         session_id, result = await self._execute_with_lifecycle(
             message_id=msg.message_id,
@@ -225,20 +237,40 @@ class Daemon:
         log.info("Resume %s complete: success=%s session=%s", msg.message_id, result.success, session_id)
 
     async def _process_permission_response(self, raw_msg: dict) -> None:
-        """Process a permission-response: ack and log the decision."""
+        """Process a permission-response: validate sender, parse via Pydantic, ack."""
         msg_id = raw_msg.get("id", "")
-        try:
-            content = json.loads(raw_msg.get("content", "{}"))
-            approved = content.get("approved", False)
-            scope = content.get("scope", "unknown")
-            ttl = content.get("ttl", 0)
-            request_id = content.get("request_id", "")
-            log.info(
-                "Permission response id=%s: approved=%s scope=%s ttl=%s request_id=%s",
-                msg_id, approved, scope, ttl, request_id,
+
+        # SEC-001: Verify operator matches
+        msg_operator = raw_msg.get("operator", "")
+        if msg_operator != self.config.operator:
+            log.warning(
+                "Permission-response operator mismatch: %r != %s (id=%s)",
+                msg_operator, self.config.operator, msg_id,
             )
-        except Exception as exc:
-            log.warning("Failed to parse permission-response id=%s: %s", msg_id, exc)
+            return
+
+        # SEC-002: Parse content through Pydantic model
+        try:
+            raw_content = json.loads(raw_msg.get("content", "{}"))
+            content = PermissionResponseContent.model_validate(raw_content)
+        except (json.JSONDecodeError, ValidationError) as exc:
+            log.error("Invalid permission-response content id=%s: %s", msg_id, exc)
+            return
+
+        # SEC-001: Verify request_id was pending
+        request_id = content.request_id or ""
+        if request_id not in self._pending_permission_requests:
+            log.warning(
+                "Permission-response for unknown request_id=%s (id=%s)",
+                request_id, msg_id,
+            )
+            return
+        self._pending_permission_requests.discard(request_id)
+
+        log.info(
+            "Permission response id=%s: approved=%s scope=%s ttl=%s request_id=%s",
+            msg_id, content.approved, content.scope, content.ttl, request_id,
+        )
         await self.a2a.ack_message(msg_id, response="permission-noted")
 
     async def _heartbeat_loop(self) -> None:

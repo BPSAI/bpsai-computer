@@ -46,6 +46,21 @@ def severities_at_or_above(min_severity: str) -> set[str]:
 _MAX_DICT_BYTES = 4096
 
 
+import re as _re
+
+_ISO_TIMESTAMP_RE = _re.compile(
+    r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}"  # YYYY-MM-DDTHH:MM:SS
+    r"(?:\.\d+)?"                               # optional fractional seconds
+    r"(?:Z|[+-]\d{2}:\d{2})?$"                  # optional timezone
+)
+
+
+def _validate_timestamp(v: str) -> str:
+    if not _ISO_TIMESTAMP_RE.match(v):
+        raise ValueError(f"timestamp must be ISO 8601 format, got {v!r}")
+    return v
+
+
 def _validate_dict_size(v: dict[str, Any], field_name: str = "dict") -> dict[str, Any]:
     """Reject dicts whose JSON serialisation exceeds _MAX_DICT_BYTES."""
     raw = _json.dumps(v, separators=(",", ":"), default=str)
@@ -54,12 +69,6 @@ def _validate_dict_size(v: dict[str, Any], field_name: str = "dict") -> dict[str
             f"{field_name} exceeds {_MAX_DICT_BYTES}-byte limit "
             f"({len(raw.encode())} bytes)"
         )
-    return v
-
-
-def _validate_severity(v: str) -> str:
-    if v not in SEVERITY_LEVELS:
-        raise ValueError(f"severity must be one of {sorted(SEVERITY_LEVELS)}, got {v!r}")
     return v
 
 
@@ -79,7 +88,9 @@ class ChannelEnvelope(BaseModel):
     @field_validator("severity")
     @classmethod
     def check_severity(cls, v: str) -> str:
-        return _validate_severity(v)
+        if v not in SEVERITY_LEVELS:
+            raise ValueError(f"severity must be one of {sorted(SEVERITY_LEVELS)}, got {v!r}")
+        return v
 
     @field_validator("metadata")
     @classmethod
@@ -124,6 +135,11 @@ class SessionStartedContent(BaseModel):
     timestamp: str = Field(..., max_length=64)
     resumed: bool = False
 
+    @field_validator("timestamp")
+    @classmethod
+    def check_timestamp(cls, v: str) -> str:
+        return _validate_timestamp(v)
+
 
 class SessionCompleteContent(BaseModel):
     """Content of a session-complete lifecycle event."""
@@ -134,6 +150,11 @@ class SessionCompleteContent(BaseModel):
     output_summary: str = Field(..., max_length=50_000)
     timestamp: str = Field(..., max_length=64)
 
+    @field_validator("timestamp")
+    @classmethod
+    def check_timestamp(cls, v: str) -> str:
+        return _validate_timestamp(v)
+
 
 class SessionFailedContent(BaseModel):
     """Content of a session-failed lifecycle event."""
@@ -143,6 +164,11 @@ class SessionFailedContent(BaseModel):
     exit_code: int | None
     timestamp: str = Field(..., max_length=64)
 
+    @field_validator("timestamp")
+    @classmethod
+    def check_timestamp(cls, v: str) -> str:
+        return _validate_timestamp(v)
+
 
 class OutputLine(BaseModel):
     """Single line in a session-output batch."""
@@ -151,6 +177,11 @@ class OutputLine(BaseModel):
     content: str
     stream: str = Field(..., max_length=16)
     timestamp: str = Field(..., max_length=64)
+
+    @field_validator("timestamp")
+    @classmethod
+    def check_timestamp(cls, v: str) -> str:
+        return _validate_timestamp(v)
 
 
 class SessionOutputContent(BaseModel):
@@ -176,7 +207,14 @@ class SignalBatchItem(BaseModel):
     @field_validator("severity")
     @classmethod
     def check_severity(cls, v: str) -> str:
-        return _validate_severity(v)
+        if v not in SEVERITY_LEVELS:
+            raise ValueError(f"severity must be one of {sorted(SEVERITY_LEVELS)}, got {v!r}")
+        return v
+
+    @field_validator("timestamp")
+    @classmethod
+    def check_timestamp(cls, v: str) -> str:
+        return _validate_timestamp(v)
 
     @field_validator("payload")
     @classmethod
@@ -279,17 +317,6 @@ _VALID_OPERATIONS = frozenset({"read", "write", "execute"})
 _VALID_SCOPES = frozenset({"file", "directory", "glob"})
 
 
-def _validate_operation(v: str) -> str:
-    if v not in _VALID_OPERATIONS:
-        raise ValueError(f"operation must be one of {sorted(_VALID_OPERATIONS)}, got {v!r}")
-    return v
-
-
-def _validate_scope(v: str) -> str:
-    if v not in _VALID_SCOPES:
-        raise ValueError(f"scope must be one of {sorted(_VALID_SCOPES)}, got {v!r}")
-    return v
-
 
 class PermissionRequestContent(BaseModel):
     """Content of a permission-request message (Driver -> CC/operator)."""
@@ -299,10 +326,22 @@ class PermissionRequestContent(BaseModel):
     reason: str = Field(..., max_length=1000)
     task_id: str = Field(..., max_length=64)
 
+    @field_validator("path")
+    @classmethod
+    def check_path_traversal(cls, v: str) -> str:
+        if "\x00" in v:
+            raise ValueError("path must not contain null bytes")
+        parts = v.replace("\\", "/").split("/")
+        if ".." in parts:
+            raise ValueError("path must not contain '..' segments")
+        return v
+
     @field_validator("operation")
     @classmethod
     def check_operation(cls, v: str) -> str:
-        return _validate_operation(v)
+        if v not in _VALID_OPERATIONS:
+            raise ValueError(f"operation must be one of {sorted(_VALID_OPERATIONS)}, got {v!r}")
+        return v
 
 
 class PermissionResponseContent(BaseModel):
@@ -316,16 +355,30 @@ class PermissionResponseContent(BaseModel):
     @field_validator("scope")
     @classmethod
     def check_scope(cls, v: str) -> str:
-        return _validate_scope(v)
+        if v not in _VALID_SCOPES:
+            raise ValueError(f"scope must be one of {sorted(_VALID_SCOPES)}, got {v!r}")
+        return v
 
 
 # -- Workspace listing ---------------------------------------------------------
 
 
+_VALID_WORKSPACE_STATUSES = frozenset({"active", "inactive", "archived"})
+
+
 class WorkspaceInfo(BaseModel):
     """A workspace returned by GET /workspaces."""
 
-    workspace_id: str
-    name: str
-    workspace_root: str | None = None
-    status: str = Field(..., pattern=r"^(active|inactive|archived)$")
+    workspace_id: str = Field(..., max_length=128)
+    name: str = Field(..., max_length=128)
+    workspace_root: str | None = Field(None, max_length=512)
+    status: str = Field(..., max_length=32)
+
+    @field_validator("status")
+    @classmethod
+    def check_status(cls, v: str) -> str:
+        if v not in _VALID_WORKSPACE_STATUSES:
+            raise ValueError(
+                f"status must be one of {sorted(_VALID_WORKSPACE_STATUSES)}, got {v!r}"
+            )
+        return v
