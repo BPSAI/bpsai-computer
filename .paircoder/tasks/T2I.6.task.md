@@ -5,9 +5,10 @@ plan: plan-sprint-2-engage
 type: feature
 priority: P1
 complexity: 5
-status: in_progress
+status: done
 sprint: '2'
 depends_on: []
+completed_at: '2026-04-15T00:45:26.667427'
 ---
 
 # Notification severity routing
@@ -16,7 +17,7 @@ A2A needs severity-based filtering so CC can populate the Notifications panel (C
 
 # Acceptance Criteria
 
-- [ ] `GET /messages/feed` accepts `severity` query parameter (info, warning, error, critical)
-- [ ] `GET /messages/feed` accepts `min_severity` for threshold filtering (e.g., min_severity=warning returns warning+error+critical)
-- [ ] Existing messages without severity default to `info`
-- [ ] Contract test validates severity filtering
+- [x] `GET /messages/feed` accepts `severity` query parameter (info, warning, error, critical)
+- [x] `GET /messages/feed` accepts `min_severity` for threshold filtering (e.g., min_severity=warning returns warning+error+critical)
+- [x] Existing messages without severity default to `info`
+- [x] Contract test validates severity filtering

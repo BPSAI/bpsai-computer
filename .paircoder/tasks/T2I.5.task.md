@@ -5,9 +5,10 @@ plan: plan-sprint-2-engage
 type: feature
 priority: P1
 complexity: 8
-status: in_progress
+status: done
 sprint: '2'
 depends_on: []
+completed_at: '2026-04-15T00:28:53.396974'
 ---
 
 # Channel escalation routing (D-024)
@@ -16,9 +17,9 @@ When a driver hits a permission wall on non-`.claude/` paths, it sends an A2A ch
 
 # Acceptance Criteria
 
-- [ ] `permission-request` message type accepted by `POST /messages`
-- [ ] `permission-response` message type accepted by `POST /messages`
-- [ ] Request includes: `path`, `operation` (read/write/execute), `reason`, `task_id`
-- [ ] Response includes: `approved` (bool), `scope` (file/directory/glob), `ttl` (seconds)
-- [ ] CC can filter messages by `type: "permission-request"` for approval UI
-- [ ] Schema defined in shared contracts (T2I.3)
+- [x] `permission-request` message type accepted by `POST /messages`
+- [x] `permission-response` message type accepted by `POST /messages`
+- [x] Request includes: `path`, `operation` (read/write/execute), `reason`, `task_id`
+- [x] Response includes: `approved` (bool), `scope` (file/directory/glob), `ttl` (seconds)
+- [x] CC can filter messages by `type: "permission-request"` for approval UI
+- [x] Schema defined in shared contracts (T2I.3)
