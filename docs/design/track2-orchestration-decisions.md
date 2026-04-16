@@ -295,11 +295,24 @@ Then Phase D adds the direct session capability (Model B/C/D) once the basic Nav
 
 Bigger investment but CC becomes the real product — not a chat wrapper around A2A. If the vision is "CC is how you operate Computer Prime," this is the direct path.
 
-### The product question that decides it:
+### The product definition that decides it:
 
-**Is CC a dashboard for monitoring your agent fleet, or is it the cockpit for flying Computer Prime?**
+**CC's goal: a single interface to access all org activity and read/dispatch work to your machines and workspaces.**
 
-- Dashboard = Strategy 1. A2A is the backbone. CC renders what happened. Chat dispatches work.
-- Cockpit = Strategy 2. CC IS the interface. You connect to your daemon. You see what it sees. You steer.
+That means CC is not just a dashboard or just a cockpit — it's both. It must:
+- Show all org activity across all operators, workspaces, and daemons (read)
+- Let an operator dispatch work to any of their machines/workspaces (write)
+- Surface project state: plans, backlogs, task status, signals (read)
+- Provide real-time feedback when a daemon is executing (stream)
 
-Both are valid. The dashboard ships faster and serves the SaaS use case. The cockpit is what you actually want to use daily.
+This points toward **CC as its own AI chat interface with tools that route requests** to the right daemon/workspace. The Chat isn't just composing A2A messages — it's an AI that understands the fleet, reads org state, and dispatches intelligently.
+
+In practice this means:
+- CC Chat has tools: `dispatch_to_workspace`, `read_project_state`, `list_sessions`, `get_signals`, `browse_plan`
+- These tools route through A2A for async/fleet operations (always available)
+- When a daemon is reachable, tools can optionally go direct for real-time streaming
+- The AI in CC composes multi-step operations ("plan sprint 42 for bpsai-computer, wait for Navigator to draft, show me the plan") using these tools
+
+**Strategy 1 still works as a starting point** — build the tools against A2A first (~90cx). Strategy 2 adds direct daemon sessions later for the real-time streaming piece. The tool interface is the same either way; only the transport changes.
+
+This is Model D (Hybrid) with a clear product rationale: A2A is always the backbone for org-wide visibility and async dispatch. Direct sessions are an optimization for interactive use, not a replacement.
