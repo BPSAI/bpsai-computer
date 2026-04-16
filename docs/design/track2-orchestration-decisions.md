@@ -60,75 +60,121 @@ Daemon posts state snapshots to A2A as messages (`type: "state-update"`, `type: 
 
 ---
 
-## Decision 2: CC → Daemon communication model
+## Decision 2: What IS Command Center's relationship to Computer Prime?
 
-**Question:** Is CC a remote control for daemons (direct connection), or does everything go through the A2A dispatch layer?
+**The fundamental question:** Is CC a chat UI that composes dispatch messages for A2A, or is it the actual interface to Computer Prime — a direct connection to a daemon where the AI orchestrates in real-time?
 
-### Option A: Always Through A2A (Current Architecture)
+This isn't a technical detail. It determines what CC becomes as a product.
+
+### Model A: Chat → Dispatch Layer (Current)
+
+CC is a chat UI. Human types intent. CC posts a message to A2A. Daemon picks it up seconds later. Fire-and-forget. Results trickle back through the feed.
 
 ```
-CC → POST /messages (A2A) → Daemon polls → Executes → POST result (A2A) → CC reads feed
+Human → CC Chat → POST /messages (A2A) → Daemon polls → Executes → Results via feed
 ```
 
-**Pros:**
-- Already works — Phase A E2E proved this
-- A2A handles auth, org scoping, message persistence, audit trail
-- CC doesn't need to know daemon addresses
-- Multiple daemons on different machines just work (poll same A2A)
-- CC can be a public SaaS UI — never touches private infrastructure directly
+**What it feels like:** Sending emails to a robot. You describe what you want, wait, check back later.
+
+**Where it works well:**
+- Async work (fire a sprint, come back tomorrow)
+- Multi-machine fleet (David's daemon + Mike's daemon poll same A2A)
+- Public SaaS — CC never touches private infrastructure
 - Offline daemons pick up work when they reconnect
+- Audit trail for everything that happened
 
-**Cons:**
-- Latency: poll interval (currently 5s) adds delay
-- No streaming: daemon output arrives in batches, not real-time
-- A2A is a bottleneck — if it goes down, no dispatches flow
-- Feels indirect for "run this now" commands
+**Where it breaks down:**
+- Latency: 5s poll delay makes interactive work painful
+- No streaming: can't watch Claude Code think in real time
+- Indirect: "run this now" feels like putting a letter in a mailbox
+- The operator is removed from the loop — you dispatch and hope
 
-### Option B: Direct WebSocket to Daemon
+### Model B: CC as Computer Prime's Frontend
 
-```
-CC ←→ WebSocket ←→ Daemon (real-time bidirectional)
-```
-
-**Pros:**
-- Sub-second latency, real-time streaming output
-- True "remote control" feel — type command, see output immediately
-- No poll interval delay
-
-**Cons:**
-- Daemon must be directly addressable (public IP/DNS or tunnel)
-- Auth model changes — CC authenticates directly with daemon, not A2A
-- Breaks multi-tenant model — CC is coupled to specific daemon instances
-- Can't be a public SaaS UI without a relay layer (which is just A2A with extra steps)
-- Daemon on a laptop behind NAT isn't reachable
-- Two communication channels to maintain (WebSocket for live, A2A for persistence)
-
-### Option C: A2A with SSE Streaming Enhancement
+CC establishes a persistent session with a specific daemon. The daemon IS Computer Prime — it has the AI brain, repo access, agent dispatch. CC is just the rendering layer. Like VS Code Remote or claude.ai/code — the UI is in the browser, the intelligence runs on the machine.
 
 ```
-CC → POST /messages (A2A) → Daemon polls → Executes
-Daemon → POST /messages/stream (A2A) → A2A pushes via SSE → CC receives real-time
+Human → CC ←→ Persistent Session ←→ Daemon (Computer Prime)
+                                       ├── reads repos
+                                       ├── dispatches agents
+                                       ├── streams output to CC
+                                       └── posts audit trail to A2A
 ```
 
-Keep A2A as the dispatch layer but add real-time output streaming through it. Daemon posts output lines to A2A as `session-output` messages (contract already exists in T2I.3). CC's SSE feed picks them up in near-real-time.
+**What it feels like:** A cockpit. You see what Computer Prime sees. You can steer. Output streams live. You approve plans inline. You watch drivers execute.
 
-**Pros:**
-- Best of both: real-time feel with A2A's auth/persistence/multi-tenant model
-- CC remains a SaaS-ready UI — no direct daemon coupling
-- Output is persisted in A2A for session drill-down (CCH.5 already built for this)
-- Contract already exists (`SessionOutputContent` in contracts package)
+**Where it works well:**
+- Interactive orchestration — "plan sprint 42" and watch it happen
+- Real-time output streaming — see Claude Code's thinking as it runs
+- Direct control — pause, redirect, resume mid-session
+- Natural for the "I'm at my desk driving Computer Prime" use case
 
-**Cons:**
-- Not true real-time — A2A adds a hop (but milliseconds, not seconds)
-- Daemon must post output frequently (per-line or per-batch)
-- A2A storage grows with streaming output
-- Need to implement the SSE push path in A2A (currently poll-based)
+**Where it gets complicated:**
+- Daemon must be reachable from CC (direct address, tunnel, or relay)
+- Auth changes — CC authenticates with daemon, not just A2A
+- Daemon on a laptop behind NAT needs a tunnel (ngrok, Cloudflare Tunnel, tailscale)
+- Can't be a pure public SaaS without a relay/proxy layer
+- Two modes: "connected to a daemon" vs "browsing the feed offline"
+
+**A2A's role changes:** A2A becomes the audit/persistence/offline layer, not the communication channel. Daemon still posts lifecycle events and signals to A2A. CC can still browse the A2A feed when not connected to a daemon. But live interaction goes direct.
+
+### Model C: MCP Bridge
+
+CC connects to the daemon as an MCP client. Daemon exposes MCP tools (read-file, run-tests, dispatch-agent, get-plan-status, browse-signals). CC's AI uses those tools to interact with the machine. This is how Claude Code's IDE extensions work — MCP tools bridge the gap.
+
+```
+Human → CC (with AI) → MCP tools → Daemon (MCP server)
+                                      ├── tool: read_file(path)
+                                      ├── tool: dispatch_agent(spec)
+                                      ├── tool: get_plan_status(plan_id)
+                                      ├── tool: list_sessions()
+                                      └── tool: stream_output(session_id)
+```
+
+**What it feels like:** Like having Claude Code in the browser, but with Computer Prime's tools. The AI in CC can read repos, dispatch work, check status — all through MCP.
+
+**Where it works well:**
+- Leverages existing MCP ecosystem (Claude Code already speaks MCP)
+- Daemon becomes a tool provider, not a message consumer
+- CC's AI can compose complex operations (read state → decide → dispatch → monitor)
+- Clean separation: CC owns the AI conversation, daemon owns the machine
+
+**Where it gets complicated:**
+- Same reachability problem as Model B (daemon must be addressable)
+- MCP is request/response, not streaming — need a separate channel for live output
+- Daemon needs an MCP server implementation (new code)
+- CC needs an MCP client in the browser (or in a Next.js server route)
+
+### Model D: Hybrid — A2A for Async, Direct for Live
+
+Both models coexist. A2A is the default — always available, works offline, handles fleet operations. When an operator wants interactive control, CC establishes a direct session (Model B or C) with a specific daemon.
+
+```
+Default mode:  CC → A2A → Daemon (async dispatch, fleet-wide)
+Live mode:     CC ←→ Daemon (direct session, single machine)
+Both modes:    Daemon → A2A (audit trail, signals, lifecycle events always posted)
+```
+
+**What it feels like:** You can browse the fleet dashboard (A2A-backed) anytime. When you want to drive, you "connect" to a daemon and get real-time control. Like having both a mission control dashboard and a direct radio to the astronaut.
+
+**Where it works well:**
+- Best of both worlds
+- Public SaaS users get the A2A experience (Model A)
+- Power users (Mike, David) get direct control (Model B/C)
+- Graceful degradation — if daemon goes offline, CC still shows the A2A feed
+
+**Where it gets complicated:**
+- Two code paths for interaction
+- UI must handle connected vs disconnected state
+- More surface area to test and maintain
 
 ### What we need to decide:
-- [ ] Which option (A, B, C)?
-- [ ] If A (current): is the 5s poll delay acceptable, or do we reduce it?
-- [ ] If C (SSE streaming): does A2A push output events to connected SSE clients, or does CC poll faster for session-output messages?
-- [ ] Long-term: will CC ever need to connect to daemons outside our org (customer daemons)? If yes, A2A-only is the right answer.
+- [ ] Which model? (A = chat/dispatch, B = direct frontend, C = MCP bridge, D = hybrid)
+- [ ] If B/C/D: how does the daemon become reachable? (Tunnel service? Tailscale? Only works on same network?)
+- [ ] If B/C/D: what's the connection protocol? (WebSocket? MCP over HTTP? gRPC?)
+- [ ] If D: does live mode use the same CC UI or a separate "cockpit" view?
+- [ ] Product question: will customers run CC against their own daemons, or only against our hosted A2A? This determines whether Model A is sufficient long-term.
+- [ ] Scope question: is this a Phase C decision or a Phase D decision? If Phase C, it changes what Track 2 builds (~90cx becomes ~150-200cx). If Phase D, we ship the basic loop with Model A now and evolve.
 
 ---
 
@@ -220,22 +266,40 @@ Depending on decisions, the ~90cx estimate shifts:
 | Decision | If simpler option | If richer option | Delta |
 |----------|------------------|-----------------|-------|
 | D1: Project state | GitHub API read-through (~15cx) | A2A state messages (~25cx) | +10 |
-| D2: Communication | Keep current A2A polling (~0cx) | SSE streaming (~20cx) | +20 |
+| D2: CC↔Daemon model | Model A — keep dispatch layer (~0cx) | Model B/C — direct session (~60-80cx) | +60-80 |
 | D3: Plan lifecycle | CC Chat trigger + Chat approval (~30cx) | Full UI with approval button + progress view (~50cx) | +20 |
 
-Conservative path (simpler options): ~90cx as estimated
-Rich path (all richer options): ~140cx
+Conservative path (Model A + GitHub + Chat approval): ~90cx
+Mid path (Model A + GitHub + approval UI): ~110cx
+Rich path (Model D hybrid + GitHub + approval UI): ~170-200cx
 
 ---
 
 ## Recommended Starting Point
 
-If you want to ship Phase C quickly and iterate:
+Two viable strategies depending on where you want CC to end up:
 
-1. **D1: Option C (Hybrid)** — GitHub for project artifacts, A2A for live status. Start with GitHub read-through in a new "Project" panel.
-2. **D2: Option A (Current)** — Keep A2A dispatch. Reduce poll interval to 2s. SSE streaming is a Phase D enhancement.
-3. **D3: Options i/i/iii** — CC Chat triggers Navigator, Navigator writes plan to repo + posts summary to A2A, human approves in Chat ("send it"). Simplest path that enables the full loop.
+### Strategy 1: Ship the loop, evolve the cockpit (Phase C = ~90cx, Phase D = cockpit)
 
-This keeps the backlog at ~90cx and delivers the Phase C completion criteria: "type 'plan sprint' in CC Chat, see it happen, review results."
+1. **D1: Option C (Hybrid)** — GitHub for project artifacts, A2A for live status.
+2. **D2: Model A (Dispatch)** — Keep A2A dispatch. Reduce poll interval to 2s. It works, it's proven.
+3. **D3: Chat trigger + Chat approval** — Simplest path to the Phase C completion criteria.
 
-The richer options (dedicated Project panel with GitHub integration, SSE streaming, approval buttons) are natural Phase D work once the basic loop works.
+Then Phase D adds the direct session capability (Model B/C/D) once the basic Navigator loop works end-to-end. You ship Phase C faster and learn what the cockpit actually needs from real usage.
+
+### Strategy 2: Build the cockpit now (Phase C = ~170-200cx)
+
+1. **D1: Option C (Hybrid)** — Same.
+2. **D2: Model D (Hybrid)** — A2A for async/fleet, direct session for interactive. Build the connection layer now.
+3. **D3: Full UI** — Approval buttons, plan viewer, streaming output in CC.
+
+Bigger investment but CC becomes the real product — not a chat wrapper around A2A. If the vision is "CC is how you operate Computer Prime," this is the direct path.
+
+### The product question that decides it:
+
+**Is CC a dashboard for monitoring your agent fleet, or is it the cockpit for flying Computer Prime?**
+
+- Dashboard = Strategy 1. A2A is the backbone. CC renders what happened. Chat dispatches work.
+- Cockpit = Strategy 2. CC IS the interface. You connect to your daemon. You see what it sees. You steer.
+
+Both are valid. The dashboard ships faster and serves the SaaS use case. The cockpit is what you actually want to use daily.
