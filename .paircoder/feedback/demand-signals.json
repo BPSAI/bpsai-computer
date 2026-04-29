@@ -1,33 +1,45 @@
 {
   "features": {
-    "bugfix": {
-      "total_invocations": 35592,
-      "unique_licenses": 4,
-      "adoption_rate": 0.6667,
+    "feature": {
+      "total_invocations": 577477,
+      "unique_licenses": 6,
+      "adoption_rate": 1.0,
       "stale": false
     },
-    "feature": {
-      "total_invocations": 237017,
+    "bugfix": {
+      "total_invocations": 42798,
+      "unique_licenses": 5,
+      "adoption_rate": 0.8333,
+      "stale": false
+    },
+    "refactor": {
+      "total_invocations": 11142,
       "unique_licenses": 5,
       "adoption_rate": 0.8333,
       "stale": false
     },
     "chore": {
-      "total_invocations": 52472,
-      "unique_licenses": 3,
-      "adoption_rate": 0.5,
-      "stale": false
-    },
-    "refactor": {
-      "total_invocations": 9970,
-      "unique_licenses": 4,
-      "adoption_rate": 0.6667,
+      "total_invocations": 72118,
+      "unique_licenses": 5,
+      "adoption_rate": 0.8333,
       "stale": false
     },
     "unknown": {
       "total_invocations": 243691,
       "unique_licenses": 2,
       "adoption_rate": 0.3333,
+      "stale": false
+    },
+    "docs": {
+      "total_invocations": 111,
+      "unique_licenses": 1,
+      "adoption_rate": 0.1667,
+      "stale": false
+    },
+    "test": {
+      "total_invocations": 17,
+      "unique_licenses": 1,
+      "adoption_rate": 0.1667,
       "stale": false
     },
     "implementation": {

@@ -3,6 +3,7 @@ name: reviewing-code
 description: Use when reviewing code changes, checking PRs, or evaluating code quality.
 skills: [reviewing-code]
 agent-roles: [nayru, laverna, vaivora]
+context: fork
 ---
 
 # Code Review
