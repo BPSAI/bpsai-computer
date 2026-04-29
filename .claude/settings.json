@@ -117,16 +117,6 @@
           }
         ]
       }
-    ],
-    "SubagentStop": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bpsai-pair telemetry log-failure --trigger \"subagent_stop\" --quiet"
-          }
-        ]
-      }
     ]
   },
   "statusLine": {
