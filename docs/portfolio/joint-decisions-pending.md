@@ -1,15 +1,15 @@
-# Joint Decisions Pending — David + Mike
+# Joint Decisions — David + Mike (RESOLVED)
 
 > **Drafted:** 2026-04-30 evening (David on travel prep)
-> **For:** Mike (overnight or morning) and David (morning return)
+> **Resolved:** 2026-05-01 (Mike + David walkthrough)
 > **Companion to:** `docs/portfolio/phase-c-completion-and-next.md` (the full unified plan)
-> **Purpose:** Decision-forward summary. Each item is something to resolve before the next sprint kicks off.
+> **Purpose:** Decision-forward summary. All eight decisions resolved; sprint scope is now definitive.
 
 ---
 
 ## TL;DR
 
-The Phase C migration is ~90% shipped. We are one focused sprint away from David switching off framework-orchestration onto Computer/CC. Eight decisions gate that sprint's scope and sequencing. Three are loaded enough to deserve a real conversation; the rest are quick yes/no calls.
+The Phase C migration is ~90% shipped. All eight gating decisions are now resolved. The next sprint is a conservative single sprint (~90cx) shipping Model A (dashboard) orchestration. DanHil is unblocked via Path A (env-var docs, ~5cx). Adapter extraction (Path B, 35cx) queued for a future sprint — design docs are ready.
 
 ---
 
@@ -17,77 +17,69 @@ The Phase C migration is ~90% shipped. We are one focused sprint away from David
 
 ### D2 — CC ↔ Computer relationship: dashboard or cockpit?
 
-**The question:** Is Command Center primarily an **org-wide visibility surface that dispatches via A2A messages** (Model A — leaner, faster to ship), or a **cockpit with direct daemon sessions and rich interactivity** (Model D — heavier, more capability)?
+**RESOLVED: Model A (dashboard)**
 
-**Why it's loaded:** This is the product call, not just an architecture call. Mike already reframed it that way in commit `2d3c6c5`. The cx swing is 0-80cx for Track 2 Orchestration alone, and it shapes CCD dispatch UI scope (~20cx more or less).
+CC issues A2A dispatch messages; daemon does the work; CC observes via feeds. ~90cx Track 2 Orchestration.
 
-**Options on the table:**
-- **Model A (dashboard):** CC issues A2A dispatch messages; daemon does the work; CC observes via feeds. ~90cx Track 2 Orchestration.
-- **Model B (direct frontend):** CC connects directly to daemons. ~150cx.
-- **Model C (MCP bridge):** CC → MCP → daemon. Indirect, more flexible. ~140cx.
-- **Model D (hybrid A+direct):** A2A for org-wide observability, direct sessions for active work. ~170-200cx.
+**Direct session control** (SSH vs Claude native Remote Control vs Daemon-direct) is deferred to Horizon 2 with a dedicated design pass. The method of direct session control requires its own planning round — it is not a Phase C concern.
 
-**Recommendation:** Pick Model A for Phase C completion. Ship the dispatch loop, validate the switch trigger, revisit Model D in Horizon 2 once usage shows whether richer interactivity is genuinely worth the cost. Premature Model D risks dragging Phase C across multiple sprints.
-
-**Unblocks if resolved:** Track 2 Orchestration backlog can be drafted at `bpsai-computer/plans/backlogs/track-2-orchestration.md`. CCD dispatch UI scope locks in.
+**Rationale:** Model A gets Phase C shipped and allows us to prove the loop before adding more features. This is the intended dev flow.
 
 ---
 
-### HE — Harness adapter scope: Path A or Path B?
+### HE — Harness adapter scope: Path A now, Path B later
 
-**The question:** Do we ship **Path A** (~5cx of env-var docs + a convenience CLI command, leveraging the fact that Claude Code already supports all providers via `ANTHROPIC_BASE_URL`) or **Path B** (~35cx Protocol + ClaudeCodeAdapter extraction, scaffolding for future Codex/local-model adapters)?
+**RESOLVED: Path A (~5cx) ships now. Path B (~35cx) queued for future sprint.**
 
-**Why it's loaded:** This is **revenue-blocking**. DanHil + AP Automation + four developer onboardings are waiting. The question has been open for 2 weeks across three docs that contradict each other (`phase-c-overview.md` says Path A, `harness-adapter-extraction.md` says Path B, `sprint-next-high-impact.md` carries Path B forward).
+**What DanHil actually needs** (per `proposal-danhil-commercial-api.md`):
+- AP Portal OCR 2.0 → API key swap to DanHil-owned Commercial API org (not a harness change)
+- Four developers on PairCoder → same Claude Code harness, DanHil's Commercial API key via `ANTHROPIC_API_KEY`
+- Taylor's Claude Cowork → subscription seats (nothing to do with the harness)
+- Azure OpenAI fallback → Horizon 2+ (HE3.1/HE5.x per the design doc's own timeline)
 
-**Source docs to read:**
-- `bpsai-framework/docs/in_review/harness-adapter-design.md`
-- `bpsai-framework/docs/in_review/harness-adapter-extraction.md`
-- `bpsai-framework/docs/in_review/proposal-danhil-commercial-api.md`
+**Conclusion:** DanHil needs a different API key behind the same harness, not a different harness. Path A unblocks them immediately.
 
-**Recommendation framing (not a recommendation):** This is yours. The technical question is "does DanHil need a different harness or just a different model behind the same harness?" If the latter, Path A solves it tomorrow. If the former, Path B is the right architecture but should be scoped against revenue impact, not architectural elegance.
+**Path B status:** The design docs (`harness-adapter-design.md`, `harness-adapter-extraction.md`) are solid and ready to execute. The adapter extraction (HE0.1–HE1.2) is queued for a future sprint. It just doesn't need to block revenue.
 
-**Unblocks if resolved:** DanHil onboarding, AP Automation key migration, four developer activations.
+**Immediate action:** Write env-var docs and ship the convenience command (~5cx). DanHil unblocked.
+
+**Unblocked:** DanHil onboarding, AP Automation key migration, four developer activations.
 
 ---
 
-### Switch timing — single conservative sprint or two-sprint rich path?
+### Switch timing — single conservative sprint
 
-**The question:** Do we ship Track 2 Orchestration at the conservative scope (~90cx, one sprint) and switch to Computer/CC orchestration immediately, then layer richer capabilities in Horizon 2? Or do we commit to the rich-cockpit scope (~200cx, two sprints) and switch later with more capability already in place?
+**RESOLVED: Conservative path (~90cx, one sprint)**
 
-**Why it's loaded:** A 100cx scope delta. The conservative path gets us off framework-orchestration faster and validates the loop before we invest in richer surfaces. The rich path means a single longer commitment but lands with more product surface from day one.
+Model A inherently means the cockpit is deferred, so the rich path (~200cx) does not apply. Ship Track 2 Orchestration at conservative scope, switch to Computer/CC orchestration, then layer richer capabilities in Horizon 2.
 
-**Recommendation:** Conservative path, then layer. Validate that "orchestrate from Computer/CC" works at all before deepening it. Mistakes are cheaper to find at 90cx than at 200cx.
-
-**Unblocks if resolved:** Sprint composition for the next sprint becomes definitive.
+**Rationale:** Validate that "orchestrate from Computer/CC" works at all before deepening it. Mistakes are cheaper to find at 90cx than at 200cx.
 
 ---
 
 ## The five lighter decisions
 
-| ID | Question | Recommended answer | Cx | Unblocks |
-|----|----------|---------------------|----|----------|
-| **D1** | How does CC see project state? | Hybrid (GitHub for plans/state.md, A2A for live signals) | ~10 | Track 2 Orchestration scope |
-| **D3** | Plan lifecycle: chat-trigger + chat-approval, or UI approval? | Chat trigger + chat approval (conservative) | ~20 | Track 2 Orchestration scope |
-| **AKS** | Amunet knowledge scanner: Horizon 1 or Horizon 2? | Horizon 2 — let migration finish first | 26 | Sprint composition |
-| **EA5** | Deprecate `--hooks-advisory` flag, or just delete? | Delete (no users; trivial) | 5 | Closes engage lifecycle |
-| **Plan 4 substrate types** | Does `ReasoningTrace` schema live in `bpsai-framework` or `bpsai-a2a`? | bpsai-framework (cross-repo schema authority); a2a re-exports | 5 | PL.3 implementation kickoff |
+| ID | Question | **Resolution** | Cx | Unblocks |
+|----|----------|----------------|-----|----------|
+| **D1** | How does CC see project state? | **Hybrid — GitHub MCP tool for plans/state.md, A2A for live signals.** Give the UI Claude Chat a GitHub MCP tool or similar. | ~10 | Track 2 Orchestration scope |
+| **D3** | Plan lifecycle: chat-trigger + chat-approval, or UI approval? | **Chat-trigger + chat-approval.** No special UI needed. Operator starts a plan via chat, Claude drafts it, operator approves in chat. | ~20 | Track 2 Orchestration scope |
+| **AKS** | Amunet knowledge scanner: Horizon 1 or Horizon 2? | **Horizon 2.** Let migration finish first. | 26 | Sprint composition |
+| **EA5** | Deprecate `--hooks-advisory` flag, or just delete? | **Delete.** No users; trivial. | 5 | Closes engage lifecycle |
+| **Plan 4 substrate types** | Does `ReasoningTrace` schema live in `bpsai-framework` or `bpsai-a2a`? | **bpsai-framework** (cross-repo schema authority); a2a re-exports. | 5 | PL.3 implementation kickoff |
 
 ---
 
-## What's ready to start the moment decisions land
+## What's ready to start now
 
-Independent of the decisions above, two pieces of work can start tonight or first thing tomorrow:
-
-### Mike (anytime, no blockers)
+### Mike (no blockers)
 - **T2I.2** — Session-resume A2A message type (8cx). Backlog defined; ready to implement.
 - **T2I.4** — License → org_id lookup (12cx). Cross-repo with paircoder-api; can be started in parallel with T2I.2.
 
-### David (after the harness decision)
-- If Path A: write the env-var docs and ship the convenience command (~5cx). DanHil unblocked.
-- If Path B: kick off HE0.1 (DispatchAdapter Protocol, 5cx).
+### David (HE resolved → Path A)
+- Write the env-var docs and ship the convenience command (~5cx). DanHil unblocked.
 
-### Either operator (after D1/D2/D3 resolved)
-- Draft `bpsai-computer/plans/backlogs/track-2-orchestration.md` per the resolved path.
+### Either operator (D1/D2/D3 resolved)
+- Draft `bpsai-computer/plans/backlogs/track-2-orchestration.md` per the conservative Model A path (~90cx).
 - Draft `bpsai-a2a/plans/backlogs/belief-store-v1.md` (PL.4 substrate per Mike's §9.4 ratification — in-A2A, extraction-ready).
 
 ---
@@ -98,7 +90,7 @@ When all of these are green, David flips off framework-orchestration:
 
 - [ ] T2I.2 shipped and merged
 - [ ] T2I.4 shipped and merged (paircoder-api endpoint included)
-- [ ] D1, D2, D3 resolved and committed
+- [ ] ~~D1, D2, D3 resolved and committed~~ ✓ Resolved 2026-05-01
 - [ ] Track 2 Orchestration baseline shipped
 - [ ] CCD dispatch UI shipped and tested in CC
 - [ ] Validation sprint: one full sprint orchestrated end-to-end from CC → daemon → driver → review → result, David monitoring not driving
@@ -112,7 +104,7 @@ Items deliberately deferred until decisions resolve. Full consolidated list live
 
 - **Update `execution-priorities.md`** Phase C section to point to the unified plan (plan-ratified trigger)
 - **Update `status.yaml`** with verified test counts and completion percentages (plan-ratified trigger)
-- **Draft 3 new backlogs:** `track-2-orchestration.md` (D1/D2/D3-gated), `belief-store-v1.md` (anytime), `knowledge-scanner.md` (AKS-gated)
+- **Draft 3 new backlogs:** `track-2-orchestration.md` (✓ unblocked), `belief-store-v1.md` (anytime), `knowledge-scanner.md` (AKS → Horizon 2, not urgent)
 - **Resolve 6 in-review docs** in `bpsai-framework/docs/in_review/` (DanHil cluster, enterprise, deployment topology)
 - **Framework shim cleanup** — physically remove shimmed modules (switch-trigger-gated; risky if done early)
 - **Framework `dev → main` reconvergence** post-switch (housekeeping)
@@ -132,3 +124,13 @@ For context if either operator is picking this up cold:
 - Confirmed framework dev/main divergence is deliberate; switch trigger is a discrete event, not a side-effect
 
 Full context in `phase-c-completion-and-next.md` §0-§3 and §10.
+
+---
+
+## Decision resolution session (2026-05-01)
+
+All 8 decisions resolved in a single walkthrough between Mike and David. Key themes:
+
+1. **Conservative across the board** — Model A, Path A, single sprint, chat-based approval. Ship and prove before layering.
+2. **DanHil is a key-swap, not an architecture change** — the three in-review docs confirmed DanHil needs the same harness with a different API key. Path B design is ready for when we genuinely need multiple adapters.
+3. **Direct session control needs its own design pass** — the method (SSH vs Claude native vs Daemon-direct) is a Horizon 2 question that deserves proper planning, not a Phase C bolt-on.
