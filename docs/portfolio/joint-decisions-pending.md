@@ -106,6 +106,21 @@ When all of these are green, David flips off framework-orchestration:
 
 ---
 
+## Post-ratification follow-up pass (do not lose)
+
+Items deliberately deferred until decisions resolve. Full consolidated list lives in `phase-c-completion-and-next.md` §7.7. Highlights:
+
+- **Update `execution-priorities.md`** Phase C section to point to the unified plan (plan-ratified trigger)
+- **Update `status.yaml`** with verified test counts and completion percentages (plan-ratified trigger)
+- **Draft 3 new backlogs:** `track-2-orchestration.md` (D1/D2/D3-gated), `belief-store-v1.md` (anytime), `knowledge-scanner.md` (AKS-gated)
+- **Resolve 6 in-review docs** in `bpsai-framework/docs/in_review/` (DanHil cluster, enterprise, deployment topology)
+- **Framework shim cleanup** — physically remove shimmed modules (switch-trigger-gated; risky if done early)
+- **Framework `dev → main` reconvergence** post-switch (housekeeping)
+
+Don't proceed on these until the gating decision/event resolves. List exists so the pass doesn't get forgotten between decision and execution.
+
+---
+
 ## What was done today (2026-04-30)
 
 For context if either operator is picking this up cold:

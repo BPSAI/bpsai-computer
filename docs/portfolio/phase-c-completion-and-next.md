@@ -331,6 +331,26 @@ Located in `bpsai-framework/docs/in_review/`. Resolve as part of §3.5 cleanup t
 - `bpsai-a2a/plans/backlogs/belief-store-v1.md` — PL.4 substrate per §9.4
 - `bpsai-amunet/plans/backlogs/knowledge-scanner.md` — AKS1-AKS4 promoted from sprint-next-high-impact
 
+### 7.7 Post-ratification follow-up pass
+
+Items deliberately deferred until David + Mike ratify this plan and resolve §8 decisions. Single consolidated punch-list so nothing gets lost between decision and execution:
+
+| Item | Where | Why deferred | Trigger |
+|------|-------|--------------|---------|
+| Rewrite Phase C section of `bpsai-computer/docs/portfolio/execution-priorities.md` as a thin index pointing to this doc | bpsai-computer | Avoid altering pre-existing canonical doc before joint sign-off | Plan ratified |
+| Update `bpsai-computer/docs/portfolio/status.yaml` with verified test counts (Computer 648, Framework still 1,146, etc.) and Phase C completion percentages | bpsai-computer | Machine-readable portfolio state belongs to post-ratification pass | Plan ratified |
+| Draft `bpsai-computer/plans/backlogs/track-2-orchestration.md` per resolved D1/D2/D3 path (conservative ~90cx or rich ~200cx) | bpsai-computer | Scope depends on D1/D2/D3 outcomes | D1/D2/D3 resolved |
+| Draft `bpsai-a2a/plans/backlogs/belief-store-v1.md` per Mike's §9.4 ratification (in-A2A, extraction-ready) | bpsai-a2a | Substrate decided but design work not yet done | Anytime; ideally end of Horizon 1 |
+| Draft `bpsai-amunet/plans/backlogs/knowledge-scanner.md` (AKS1-AKS4) | bpsai-amunet | Inclusion in Horizon 1 vs Horizon 2 is open decision (§8 AKS) | AKS decision resolved |
+| Decide and document harness adapter Path A vs Path B; either ship Path A docs (~5cx) or kick off HE0.1 | bpsai-framework | DanHil revenue-blocking decision still open | HE decision resolved |
+| Resolve where `ReasoningTrace` schema canonically lives (framework vs a2a) before PL.3 implementation begins | bpsai-framework / bpsai-a2a | §8 Plan 4 substrate types decision; ~5cx refactor cost either way | Plan 4 substrate decision |
+| EA5: deprecate `--hooks-advisory` flag (or just delete) | paircoder | §8 EA5 decision; trivial either way | EA5 decision resolved |
+| Resolve 6 in-review docs in `bpsai-framework/docs/in_review/` (DanHil cluster, enterprise integration, deployment topology) | bpsai-framework | Each routes work to other repos rather than generating framework code | Joint review session |
+| Plan framework `dev → main` reconvergence merge | bpsai-framework | Housekeeping after switch trigger fires | Switch trigger fires |
+| Framework shim cleanup: physically remove shimmed orchestration modules | bpsai-framework dev | Wait until consumer migration is verified via `bpsai-pair sweep`; risk if done before switch | Switch trigger fires + sweep verification |
+
+This list is the complete post-ratification workstream. Items resolve in dependency order; nothing here is gated on something not listed.
+
 ---
 
 ## 8. Open decisions (need David + Mike resolution)
