@@ -4,6 +4,10 @@ __pycache__/
 agent_pack.tgz
 *.bak
 
+# IDE
+.idea/
+.vscode/
+
 # PairCoder — ephemeral/session data
 .paircoder/.cli_version
 .paircoder/history/
@@ -12,4 +16,7 @@ agent_pack.tgz
 .paircoder/telemetry/audit.jsonl
 .paircoder/telemetry/session_snapshot.json
 .paircoder/feedback/calibration.json
-.idea/
+
+# PairCoder runtime data (auto-generated; not version-controlled)
+/.paircoder/data/
+/.paircoder/telemetry/
